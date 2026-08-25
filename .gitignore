@@ -1,0 +1,9 @@
+# Git ignored files
+*.xcodeproj/
+build/
+DerivedData/
+*.xcuserdata/
+.DS_Store
+*.swiftdoc
+*.swiftinterface
+*.swiftmodule
