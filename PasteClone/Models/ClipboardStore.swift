@@ -51,11 +51,12 @@ class ClipboardStore: ObservableObject {
         // Dedup by content hash
         items.removeAll { $0.contentHash == item.contentHash && !$0.isPinned }
         items.insert(item, at: 0)
-        if items.count > 1000 {
-            // Keep all pinned + latest 1000 unpinned
+        let configuredLimit = UserDefaults.standard.object(forKey: "maxItems") as? Int ?? 1000
+        let limit = max(100, configuredLimit)
+        if items.count > limit {
+            // Keep all pinned + latest configured number of unpinned items.
             let pinned = items.filter(\.isPinned)
-            var unpinned = items.filter { !$0.isPinned }
-            if unpinned.count > 1000 { unpinned = Array(unpinned.prefix(1000)) }
+            let unpinned = Array(items.filter { !$0.isPinned }.prefix(limit))
             items = pinned + unpinned
         }
         save()
@@ -122,12 +123,20 @@ class ClipboardStore: ObservableObject {
         save()
     }
 
+    func removeCollection(_ name: String) {
+        for index in items.indices where items[index].collectionName == name {
+            items[index].collectionName = nil
+        }
+        if selectedCollection == name { selectedCollection = nil }
+        save()
+    }
+
     // Paste stack
     func pushStack(_ item: ClipboardItem) { pasteStack.append(item) }
     func popStack() -> ClipboardItem? {
         guard !pasteStack.isEmpty else { return nil }
         let item = pasteStack.removeFirst()
-        writeToPasteboard(item)
+        paste(item)
         return item
     }
 

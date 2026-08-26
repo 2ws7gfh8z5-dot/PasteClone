@@ -65,9 +65,7 @@ struct HistoryPanelView: View {
                 Divider()
                 ForEach(store.collections, id: \.self) { c in
                     Button("移除收藏 \(c)") {
-                        for i in store.items.indices where store.items[i].collectionName == c {
-                            store.items[i].collectionName = nil
-                        }
+                        store.removeCollection(c)
                     }
                 }
             } label: {

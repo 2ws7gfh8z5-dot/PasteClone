@@ -17,10 +17,17 @@ struct PreferencesView: View {
                 Text("2000").tag(2000)
             }.pickerStyle(.segmented)
             Toggle("开机启动", isOn: $launchAtLogin)
-                .onChange(of: launchAtLogin) { v in
-                    try? SMAppService.mainApp.register()
+                .onChange(of: launchAtLogin) { enabled in
+                    do {
+                        if enabled { try SMAppService.mainApp.register() }
+                        else { try SMAppService.mainApp.unregister() }
+                    } catch { launchAtLogin = SMAppService.mainApp.status == .enabled }
                 }
             Toggle("全局热键 (⇧⌘V)", isOn: $hotkeyEnabled)
+                .onChange(of: hotkeyEnabled) { enabled in
+                    if enabled { HotkeyManager.shared.register() }
+                    else { HotkeyManager.shared.unregister() }
+                }
             Spacer()
         }
         .padding(20)
