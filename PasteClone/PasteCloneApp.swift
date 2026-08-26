@@ -28,9 +28,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         HotkeyManager.shared.onTrigger = { [weak self] in self?.togglePanel() }
         HotkeyManager.shared.register()
+        
+        // 启动活跃应用监控
+        ActiveAppService.shared.startMonitoring()
     }
 
-    func applicationWillTerminate(_ notification: Notification) { HotkeyManager.shared.unregister() }
+    func applicationWillTerminate(_ notification: Notification) {
+        HotkeyManager.shared.unregister()
+        ActiveAppService.shared.stopMonitoring()
+    }
 
     func togglePanel() {
         if panel == nil { makePanel() }

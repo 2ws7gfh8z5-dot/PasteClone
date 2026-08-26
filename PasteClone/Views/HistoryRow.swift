@@ -69,18 +69,19 @@ struct HistoryRow: View {
     }
 
     @ViewBuilder var hoverButtons: some View {
+        Button { applyToActiveApp() } label: { Image(systemName: "arrow.up.right.square") }
+            .buttonStyle(.plain).foregroundColor(PCTheme.accent)
         Button { store.pushStack(item) } label: { Image(systemName: "arrow.forward.square") }
             .buttonStyle(.plain).foregroundColor(PCTheme.accent)
         Button { store.togglePin(item) } label: { Image(systemName: item.isPinned ? "pin.fill" : "pin") }
             .buttonStyle(.plain).foregroundColor(item.isPinned ? PCTheme.accent : PCTheme.inkSoft)
-        Button { showCollectionMenu = true } label: { Image(systemName: "folder") }
-            .buttonStyle(.plain).foregroundColor(PCTheme.inkSoft)
         Button { store.delete(item) } label: { Image(systemName: "trash") }
             .buttonStyle(.plain).foregroundColor(.red)
     }
 
     @ViewBuilder var contextMenu: some View {
         Button("粘贴") { onPaste() }
+        Button("应用到活跃应用") { applyToActiveApp() }
         Button(item.isPinned ? "取消固定" : "固定") { store.togglePin(item) }
         Button("加入粘贴队列") { store.pushStack(item) }
         Menu("收藏到") {
@@ -94,6 +95,20 @@ struct HistoryRow: View {
         }
         Divider()
         Button("删除", role: .destructive) { store.delete(item) }
+    }
+    
+    private func applyToActiveApp() {
+        guard let app = ActiveAppService.shared.getActiveApp() else { return }
+        if let content = item.textContent {
+            ActiveAppService.shared.pasteToApp(app, content: content)
+        } else if item.type == .file, let urls = item.fileURLs {
+            // 对于文件，写入路径字符串
+            let paths = urls.map { $0.path }.joined(separator: "\n")
+            ActiveAppService.shared.pasteToApp(app, content: paths)
+        } else if item.type == .image {
+            // 图片通过粘贴板处理
+            store.paste(item)
+        }
     }
 }
 

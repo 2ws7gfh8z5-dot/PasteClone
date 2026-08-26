@@ -13,6 +13,7 @@
 		8E29848A6863AC4E5651DB5D /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */; };
 		8FA23AD0E2A34E25583F6328 /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF8A888CD900B05A484938D /* ClipboardStore.swift */; };
 		9D25D7CC76DA9A1A7741C84A /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */; };
+		A879451A2C07C54F45BAA3F9 /* ActiveAppService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF120C51C654A8B8642765E /* ActiveAppService.swift */; };
 		B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C371CE09637BAAC2B622848 /* PasteCloneApp.swift */; };
 		BFC542849E58F1B1D7B11E83 /* HotkeyConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */; };
 		D103C638E9E3656100F21154 /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CA98672F82298957871034 /* ClipboardItem.swift */; };
@@ -35,6 +36,7 @@
 		DAF8A888CD900B05A484938D /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
 		E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		EEFBB54BC6E393DA74F928E3 /* PasteClone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PasteClone.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FCF120C51C654A8B8642765E /* ActiveAppService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveAppService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -87,6 +89,7 @@
 		BEDCDBB12AD6B89549FD0F9B /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				FCF120C51C654A8B8642765E /* ActiveAppService.swift */,
 				A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */,
 				A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */,
 				E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */,
@@ -176,6 +179,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A879451A2C07C54F45BAA3F9 /* ActiveAppService.swift in Sources */,
 				D103C638E9E3656100F21154 /* ClipboardItem.swift in Sources */,
 				9D25D7CC76DA9A1A7741C84A /* ClipboardMonitor.swift in Sources */,
 				8FA23AD0E2A34E25583F6328 /* ClipboardStore.swift in Sources */,
