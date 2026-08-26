@@ -4,6 +4,9 @@ import AppKit
 struct HistoryRow: View {
     @ObservedObject var store: ClipboardStore
     let item: ClipboardItem
+    var isSelected = false
+    var onSelect: () -> Void = {}
+    var onPaste: () -> Void = {}
     @State private var hovering = false
     @State private var showCollectionMenu = false
 
@@ -35,11 +38,13 @@ struct HistoryRow: View {
             if hovering { hoverButtons }
         }
         .padding(.horizontal, 10).padding(.vertical, 7)
-        .background(PCTheme.card)
+        .background(isSelected ? PCTheme.accentSoft.opacity(0.42) : PCTheme.card)
         .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 9).stroke(PCTheme.divider, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 9).stroke(isSelected ? PCTheme.accent : PCTheme.divider, lineWidth: isSelected ? 1.5 : 1))
+        .contentShape(Rectangle())
+        .onTapGesture { onSelect() }
         .onHover { hovering = $0 }
-        .onTapGesture(count: 2) { store.paste(item) }
+        .onTapGesture(count: 2) { onPaste() }
         .contextMenu { contextMenu }
     }
 
@@ -75,7 +80,7 @@ struct HistoryRow: View {
     }
 
     @ViewBuilder var contextMenu: some View {
-        Button("粘贴") { store.paste(item) }
+        Button("粘贴") { onPaste() }
         Button(item.isPinned ? "取消固定" : "固定") { store.togglePin(item) }
         Button("加入粘贴队列") { store.pushStack(item) }
         Menu("收藏到") {
