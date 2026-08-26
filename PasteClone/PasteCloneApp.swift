@@ -13,7 +13,7 @@ struct PasteCloneApp: App {
             Divider()
             Button("退出 PasteClone") { NSApp.terminate(nil) }
         } label: {
-            Image(systemName: "clipboard")
+            Image("MenuBarIcon")
         }
         .menuBarExtraStyle(.menu)
     }
