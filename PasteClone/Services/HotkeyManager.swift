@@ -13,8 +13,8 @@ final class HotkeyManager {
     private init() {}
 
     /// keyCode: virtual key. modifiers: Carbon flags (cmdKey/shiftKey/optionKey/controlKey)
-    func register(keyCode: UInt32 = UInt32(kVK_ANSI_V),
-                  modifiers: UInt32 = UInt32(cmdKey | shiftKey)) {
+    func register(keyCode: UInt32 = HotkeyPreset.keyCode,
+                  modifiers: UInt32 = HotkeyPreset.modifiers) {
         unregister()
 
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),

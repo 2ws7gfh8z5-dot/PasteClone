@@ -6,6 +6,8 @@ struct PreferencesView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("maxItems") private var maxItems = 1000
     @AppStorage("hotkeyEnabled") private var hotkeyEnabled = true
+    @AppStorage("hotkeyPreset") private var hotkeyPreset = HotkeyPreset.shiftCommandV.rawValue
+    @AppStorage("donationURL") private var donationURL = "https://github.com/2ws7gfh8z5-dot/PasteClone#支持开发"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -28,10 +30,24 @@ struct PreferencesView: View {
                     if enabled { HotkeyManager.shared.register() }
                     else { HotkeyManager.shared.unregister() }
                 }
+            Picker("呼出快捷键", selection: $hotkeyPreset) {
+                ForEach(HotkeyPreset.allCases) { preset in Text(preset.title).tag(preset.rawValue) }
+            }
+            .onChange(of: hotkeyPreset) { _ in
+                if hotkeyEnabled { HotkeyManager.shared.register() }
+            }
+            Divider()
+            HStack {
+                Text("捐款链接")
+                TextField("https://…", text: $donationURL)
+            }
+            Button { NSWorkspace.shared.open(URL(string: donationURL) ?? URL(string: "https://github.com/2ws7gfh8z5-dot/PasteClone")!) } label: {
+                Label("支持 PasteClone 开发", systemImage: "heart")
+            }
             Spacer()
         }
         .padding(20)
-        .frame(width: 380, height: 220)
+        .frame(width: 420, height: 300)
         .background(PCTheme.panel)
     }
 }

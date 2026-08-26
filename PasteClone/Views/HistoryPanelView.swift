@@ -31,6 +31,12 @@ struct HistoryPanelView: View {
         .onKeyPress(.upArrow) { moveSelection(-1); return .handled }
         .onKeyPress(.downArrow) { moveSelection(1); return .handled }
         .onKeyPress(.return) { pasteSelected(); return .handled }
+        .onKeyPress(characters: CharacterSet(charactersIn: "c"), phases: .down) { press in
+            command(press) { if let item = selectedItem { store.copy(item) } }
+        }
+        .onKeyPress(characters: CharacterSet(charactersIn: "v"), phases: .down) { press in
+            command(press) { pasteSelected() }
+        }
         .onKeyPress(.escape) { onHide(); return .handled }
         .onKeyPress(characters: CharacterSet(charactersIn: "f"), phases: .down) { press in
             command(press) { searchFocused = true }

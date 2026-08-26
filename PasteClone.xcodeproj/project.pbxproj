@@ -14,6 +14,7 @@
 		8FA23AD0E2A34E25583F6328 /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF8A888CD900B05A484938D /* ClipboardStore.swift */; };
 		9D25D7CC76DA9A1A7741C84A /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */; };
 		B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C371CE09637BAAC2B622848 /* PasteCloneApp.swift */; };
+		BFC542849E58F1B1D7B11E83 /* HotkeyConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */; };
 		D103C638E9E3656100F21154 /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CA98672F82298957871034 /* ClipboardItem.swift */; };
 		E8807ED80CF7B3804446A71C /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F9F68D96B904DBEE5F8E77D /* PreferencesView.swift */; };
 		FAFB959DF78CD5ECDFFAC9E8 /* HistoryPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0CFF028058849E88E94D9B /* HistoryPanelView.swift */; };
@@ -28,6 +29,7 @@
 		3F9F68D96B904DBEE5F8E77D /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		61CA98672F82298957871034 /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
 		8345ACEA71043351F972F694 /* PasteClone.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PasteClone.entitlements; sourceTree = "<group>"; };
+		A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyConfiguration.swift; sourceTree = "<group>"; };
 		A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
 		C00DE2B4296D626536B91EFC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DAF8A888CD900B05A484938D /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
@@ -86,6 +88,7 @@
 			isa = PBXGroup;
 			children = (
 				A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */,
+				A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */,
 				E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */,
 			);
 			path = Services;
@@ -178,6 +181,7 @@
 				8FA23AD0E2A34E25583F6328 /* ClipboardStore.swift in Sources */,
 				FAFB959DF78CD5ECDFFAC9E8 /* HistoryPanelView.swift in Sources */,
 				733D4C6367023DA970BE579A /* HistoryRow.swift in Sources */,
+				BFC542849E58F1B1D7B11E83 /* HotkeyConfiguration.swift in Sources */,
 				8E29848A6863AC4E5651DB5D /* HotkeyManager.swift in Sources */,
 				B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */,
 				E8807ED80CF7B3804446A71C /* PreferencesView.swift in Sources */,

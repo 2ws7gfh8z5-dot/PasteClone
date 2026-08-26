@@ -72,6 +72,11 @@ class ClipboardStore: ObservableObject {
         }
     }
 
+    func copy(_ item: ClipboardItem) {
+        suppressNextChange = true
+        writeToPasteboard(item)
+    }
+
     private func writeToPasteboard(_ item: ClipboardItem) {
         let pb = NSPasteboard.general
         pb.clearContents()
