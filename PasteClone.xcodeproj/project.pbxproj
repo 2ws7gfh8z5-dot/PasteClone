@@ -8,11 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		00833827F41533C12FE6BCC6 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C717F7BFA847E23FB761C5F /* Theme.swift */; };
+		332127B012D7F1422541E76C /* GitHubProfileUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E2C5F02DD823180CD2A6AF /* GitHubProfileUpdater.swift */; };
+		4EE3DD1B388A6D46BBBC4544 /* DonationPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 055671FE7CE344EE30481BB5 /* DonationPromptView.swift */; };
 		733D4C6367023DA970BE579A /* HistoryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E9E07AA1D6B537EFE4D592B /* HistoryRow.swift */; };
 		8412D97B67708A7C2D820A00 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1E7F58D31159AD3D60E6F859 /* Assets.xcassets */; };
 		8E29848A6863AC4E5651DB5D /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */; };
 		8FA23AD0E2A34E25583F6328 /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF8A888CD900B05A484938D /* ClipboardStore.swift */; };
 		9D25D7CC76DA9A1A7741C84A /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */; };
+		A699DBD903A2679150FAEBAB /* PasteHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475EE54ED197B30983B54C45 /* PasteHelper.swift */; };
 		A879451A2C07C54F45BAA3F9 /* ActiveAppService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF120C51C654A8B8642765E /* ActiveAppService.swift */; };
 		B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C371CE09637BAAC2B622848 /* PasteCloneApp.swift */; };
 		BFC542849E58F1B1D7B11E83 /* HotkeyConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */; };
@@ -23,6 +26,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		055671FE7CE344EE30481BB5 /* DonationPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DonationPromptView.swift; sourceTree = "<group>"; };
 		0A0CFF028058849E88E94D9B /* HistoryPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPanelView.swift; sourceTree = "<group>"; };
 		1C371CE09637BAAC2B622848 /* PasteCloneApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteCloneApp.swift; sourceTree = "<group>"; };
 		1E7F58D31159AD3D60E6F859 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -30,11 +34,11 @@
 		300856414D3AB50D07EF04D8 /* HotkeyRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyRecorder.swift; sourceTree = "<group>"; };
 		3C717F7BFA847E23FB761C5F /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		3F9F68D96B904DBEE5F8E77D /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
+		475EE54ED197B30983B54C45 /* PasteHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteHelper.swift; sourceTree = "<group>"; };
+		48E2C5F02DD823180CD2A6AF /* GitHubProfileUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubProfileUpdater.swift; sourceTree = "<group>"; };
 		61CA98672F82298957871034 /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
-		8345ACEA71043351F972F694 /* PasteClone.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PasteClone.entitlements; sourceTree = "<group>"; };
 		A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyConfiguration.swift; sourceTree = "<group>"; };
 		A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
-		C00DE2B4296D626536B91EFC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		DAF8A888CD900B05A484938D /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
 		E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		EEFBB54BC6E393DA74F928E3 /* PasteClone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PasteClone.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -45,6 +49,7 @@
 		177350AC65D0A9016E0BE7C4 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				055671FE7CE344EE30481BB5 /* DonationPromptView.swift */,
 				0A0CFF028058849E88E94D9B /* HistoryPanelView.swift */,
 				2E9E07AA1D6B537EFE4D592B /* HistoryRow.swift */,
 				300856414D3AB50D07EF04D8 /* HotkeyRecorder.swift */,
@@ -83,8 +88,6 @@
 			isa = PBXGroup;
 			children = (
 				1E7F58D31159AD3D60E6F859 /* Assets.xcassets */,
-				C00DE2B4296D626536B91EFC /* Info.plist */,
-				8345ACEA71043351F972F694 /* PasteClone.entitlements */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -94,8 +97,10 @@
 			children = (
 				FCF120C51C654A8B8642765E /* ActiveAppService.swift */,
 				A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */,
+				48E2C5F02DD823180CD2A6AF /* GitHubProfileUpdater.swift */,
 				A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */,
 				E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */,
+				475EE54ED197B30983B54C45 /* PasteHelper.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -186,12 +191,15 @@
 				D103C638E9E3656100F21154 /* ClipboardItem.swift in Sources */,
 				9D25D7CC76DA9A1A7741C84A /* ClipboardMonitor.swift in Sources */,
 				8FA23AD0E2A34E25583F6328 /* ClipboardStore.swift in Sources */,
+				4EE3DD1B388A6D46BBBC4544 /* DonationPromptView.swift in Sources */,
+				332127B012D7F1422541E76C /* GitHubProfileUpdater.swift in Sources */,
 				FAFB959DF78CD5ECDFFAC9E8 /* HistoryPanelView.swift in Sources */,
 				733D4C6367023DA970BE579A /* HistoryRow.swift in Sources */,
 				BFC542849E58F1B1D7B11E83 /* HotkeyConfiguration.swift in Sources */,
 				8E29848A6863AC4E5651DB5D /* HotkeyManager.swift in Sources */,
 				D51407AC8B6D6761FBB858B7 /* HotkeyRecorder.swift in Sources */,
 				B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */,
+				A699DBD903A2679150FAEBAB /* PasteHelper.swift in Sources */,
 				E8807ED80CF7B3804446A71C /* PreferencesView.swift in Sources */,
 				00833827F41533C12FE6BCC6 /* Theme.swift in Sources */,
 			);

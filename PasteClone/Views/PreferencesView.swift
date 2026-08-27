@@ -10,11 +10,19 @@ struct PreferencesView: View {
     @AppStorage("customHotkeyKeyCode") private var customKeyCode = 0
     @AppStorage("customHotkeyModifiers") private var customModifiers = 0
     @AppStorage("donationURL") private var donationURL = "https://github.com/2ws7gfh8z5-dot/PasteClone#支持开发"
+    @AppStorage(PCTheme.modeKey) private var appearanceMode = PCTheme.Mode.automatic.rawValue
+    @State private var clock = Date()
     @State private var showDonationPrompt = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("偏好设置").font(.system(size: 18, weight: .bold)).foregroundColor(PCTheme.ink)
+
+            Picker("外观", selection: $appearanceMode) {
+                ForEach(PCTheme.Mode.allCases) { mode in Text(mode.title).tag(mode.rawValue) }
+            }
+            .pickerStyle(.segmented)
+            .help("跟随当前时区时间：07:00–18:59 浅色，其余时间深色")
             
             // 保留条目数
             Picker("保留条目", selection: $maxItems) {
@@ -91,5 +99,7 @@ struct PreferencesView: View {
         .padding(20)
         .frame(width: 480, height: 400)
         .background(PCTheme.panel)
+        .preferredColorScheme(PCTheme.isDark(PCTheme.Mode(rawValue: appearanceMode) ?? .automatic, date: clock) ? .dark : .light)
+        .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { clock = $0 }
     }
 }

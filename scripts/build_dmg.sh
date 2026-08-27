@@ -5,8 +5,10 @@ PROJECT_DIR="/Users/huaziyi/Desktop/pasteclone"
 BUILD_DIR="$PROJECT_DIR/build"
 APP_NAME="PasteClone"
 DERIVE_DATA="$BUILD_DIR/DerivedData"
-DMG_PATH="$BUILD_DIR/PasteClone-1.0.0.dmg"
-TEMP_DMG="/tmp/PasteClone-temp.dmg"
+DMG_PATH="$BUILD_DIR/PasteClone-1.2.0.dmg"
+ZIP_PATH="$BUILD_DIR/PasteClone-1.2.0.zip"
+TEMP_DMG="$(mktemp -u /tmp/PasteClone-temp.XXXXXX).dmg"
+trap 'rm -f "$TEMP_DMG"' EXIT
 
 echo "🔨 Building Release..."
 xcodebuild -project "$PROJECT_DIR/PasteClone.xcodeproj" \
@@ -25,6 +27,7 @@ fi
 
 echo "📦 Creating DMG..."
 mkdir -p "$BUILD_DIR"
+rm -f "$DMG_PATH" "$ZIP_PATH"
 
 # 创建DMG
 hdiutil create -srcfolder "$APP_PATH" -volname "$APP_NAME" \
@@ -32,7 +35,7 @@ hdiutil create -srcfolder "$APP_PATH" -volname "$APP_NAME" \
 
 # 转换为压缩格式
 hdiutil convert "$TEMP_DMG" -format UDZO -o "$DMG_PATH" > /dev/null 2>&1
-rm "$TEMP_DMG"
+ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
 
 echo "✅ DMG created: $DMG_PATH"
-ls -lh "$DMG_PATH"
+ls -lh "$DMG_PATH" "$ZIP_PATH"

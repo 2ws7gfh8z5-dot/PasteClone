@@ -8,6 +8,8 @@ struct HistoryPanelView: View {
     @State private var selectedID: ClipboardItem.ID?
     @FocusState private var panelFocused: Bool
     @FocusState private var searchFocused: Bool
+    @AppStorage(PCTheme.modeKey) private var appearanceMode = PCTheme.Mode.automatic.rawValue
+    @State private var clock = Date()
 
     private var selectedItem: ClipboardItem? {
         let visible = store.filteredItems
@@ -23,10 +25,11 @@ struct HistoryPanelView: View {
         }
         .frame(width: 380, height: 480)
         .background(PCTheme.panel)
-        .preferredColorScheme(.light)
+        .preferredColorScheme(PCTheme.isDark(PCTheme.Mode(rawValue: appearanceMode) ?? .automatic, date: clock) ? .dark : .light)
         .focusable()
         .focused($panelFocused)
         .onAppear { selectFirst(); panelFocused = true }
+        .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { clock = $0 }
         .onChange(of: store.filteredItems.map(\.id)) { _ in normalizeSelection() }
         .onKeyPress(.upArrow) { moveSelection(-1); return .handled }
         .onKeyPress(.downArrow) { moveSelection(1); return .handled }
@@ -154,8 +157,10 @@ struct HistoryPanelView: View {
     }
     private func pasteSelected() { if let item = selectedItem { paste(item) } }
     private func paste(_ item: ClipboardItem) {
+        store.copy(item)
         onHide()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { store.paste(item) }
+        _ = ActiveAppService.shared.restoreTargetApp()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { store.paste(item) }
     }
     private func openSettings() {
         if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {

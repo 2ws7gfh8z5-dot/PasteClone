@@ -29,8 +29,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         HotkeyManager.shared.onTrigger = { [weak self] in self?.togglePanel() }
         HotkeyManager.shared.register()
         
-        ActiveAppService.shared.startMonitoring()
-        
         // 首次启动提示（仅一次）
         if !UserDefaults.standard.bool(forKey: "hasShownDonationPrompt") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -41,14 +39,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         HotkeyManager.shared.unregister()
-        ActiveAppService.shared.stopMonitoring()
     }
 
     func togglePanel() {
         if panel == nil { makePanel() }
         guard let panel else { return }
-        if panel.isVisible { panel.orderOut(nil) } else {
-            panel.center(); panel.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
+        if panel.isVisible {
+            panel.orderOut(nil)
+        } else {
+            ActiveAppService.shared.captureTargetApp()
+            panel.center()
+            panel.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
         }
     }
 

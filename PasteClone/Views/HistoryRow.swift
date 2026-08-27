@@ -35,6 +35,7 @@ struct HistoryRow: View {
                 }
             }
             Spacer(minLength: 4)
+            pasteActionButton
             if hovering { hoverButtons }
         }
         .padding(.horizontal, 10).padding(.vertical, 7)
@@ -68,9 +69,34 @@ struct HistoryRow: View {
         }
     }
 
+    var pasteActionButton: some View {
+        Button(action: onPaste) {
+            ZStack(alignment: .bottomTrailing) {
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(PCTheme.accentSoft.opacity(0.72))
+                    .frame(width: 31, height: 31)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 7, style: .continuous)
+                            .stroke(PCTheme.ink.opacity(0.22), lineWidth: 1)
+                    }
+                Image(systemName: "doc.on.clipboard")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(PCTheme.ink)
+                    .frame(width: 31, height: 31)
+                Image(systemName: "arrow.turn.down.left")
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(3)
+                    .background(Circle().fill(PCTheme.accent))
+                    .offset(x: 3, y: 3)
+            }
+        }
+        .buttonStyle(.plain)
+        .help("粘贴到当前输入框")
+        .accessibilityLabel("粘贴到当前输入框")
+    }
+
     @ViewBuilder var hoverButtons: some View {
-        Button { applyToActiveApp() } label: { Image(systemName: "arrow.up.right.square") }
-            .buttonStyle(.plain).foregroundColor(PCTheme.accent)
         Button { store.pushStack(item) } label: { Image(systemName: "arrow.forward.square") }
             .buttonStyle(.plain).foregroundColor(PCTheme.accent)
         Button { store.togglePin(item) } label: { Image(systemName: item.isPinned ? "pin.fill" : "pin") }
@@ -81,7 +107,6 @@ struct HistoryRow: View {
 
     @ViewBuilder var contextMenu: some View {
         Button("粘贴") { onPaste() }
-        Button("应用到活跃应用") { applyToActiveApp() }
         Button(item.isPinned ? "取消固定" : "固定") { store.togglePin(item) }
         Button("加入粘贴队列") { store.pushStack(item) }
         Menu("收藏到") {
@@ -97,19 +122,7 @@ struct HistoryRow: View {
         Button("删除", role: .destructive) { store.delete(item) }
     }
     
-    private func applyToActiveApp() {
-        guard let app = ActiveAppService.shared.getActiveApp() else { return }
-        if let content = item.textContent {
-            ActiveAppService.shared.pasteToApp(app, content: content)
-        } else if item.type == .file, let urls = item.fileURLs {
-            // 对于文件，写入路径字符串
-            let paths = urls.map { $0.path }.joined(separator: "\n")
-            ActiveAppService.shared.pasteToApp(app, content: paths)
-        } else if item.type == .image {
-            // 图片通过粘贴板处理
-            store.paste(item)
-        }
-    }
+
 }
 
 extension ClipboardItem {

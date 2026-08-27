@@ -4,6 +4,10 @@
 <dict>
 	<key>BuildMachineOSBuild</key>
 	<string>25G83</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>PasteClone</string>
 	<key>CFBundleExecutable</key>
 	<string>PasteClone</string>
 	<key>CFBundleIconFile</key>
@@ -19,13 +23,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
+	<string>1.2.0</string>
 	<key>CFBundleSupportedPlatforms</key>
 	<array>
 		<string>MacOSX</string>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>3</string>
 	<key>DTCompiler</key>
 	<string>com.apple.compilers.llvm.clang.1_0</string>
 	<key>DTPlatformBuild</key>
@@ -42,20 +46,16 @@
 	<string>2660</string>
 	<key>DTXcodeBuild</key>
 	<string>17F113</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
-	<key>NSAccentColorName</key>
-	<string>AccentColor</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>PasteClone 需要访问剪贴板以记录和回放内容。</string>
-	<key>NSCameraUsageDescription</key>
-	<string>用于扫描条形码等。</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright 2024. All rights reserved.</string>
-	<key>NSMainStoryboardFile</key>
-	<string></string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 </dict>

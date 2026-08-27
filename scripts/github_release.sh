@@ -6,7 +6,7 @@
 set -e
 
 REPO="2ws7gfh8z5-dot/PasteClone"
-VERSION="1.0.0"
+VERSION="1.2.0"
 BUILD_DIR="./build"
 RELEASE_NOTES="## 🎉 PasteClone v${VERSION}
 
@@ -52,4 +52,3 @@ echo "使用方式："
 echo "  gh release create v${VERSION} -t 'PasteClone v${VERSION}' -n '<notes>' ./build/PasteClone*.zip"
 echo ""
 echo "或使用 GitHub Web 界面手动上传 Releases"
-

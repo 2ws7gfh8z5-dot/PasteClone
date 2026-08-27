@@ -3,15 +3,37 @@ import AppKit
 
 /// Anthropic 手绘风格主题 + 液态玻璃效果
 enum PCTheme {
+    static let modeKey = "appearanceMode"
+
+    enum Mode: String, CaseIterable, Identifiable {
+        case automatic, light, dark
+        var id: String { rawValue }
+        var title: String {
+            switch self { case .automatic: return "跟随时间"; case .light: return "浅色"; case .dark: return "深色" }
+        }
+    }
+
+    static func isDark(_ mode: Mode, date: Date = Date()) -> Bool {
+        if mode == .dark { return true }
+        if mode == .light { return false }
+        let hour = Calendar.current.component(.hour, from: date)
+        return !(7..<19).contains(hour)
+    }
+
+    static func isDark(date: Date = Date()) -> Bool {
+        let mode = Mode(rawValue: UserDefaults.standard.string(forKey: modeKey) ?? "automatic") ?? .automatic
+        return isDark(mode, date: date)
+    }
+
     // 暖纸张背景，墨水轮廓，陶土/橙色重音 — Anthropic 手绘风格
-    static let bg = Color(red: 0.98, green: 0.96, blue: 0.92)
-    static let panel = Color(red: 0.99, green: 0.98, blue: 0.95)
-    static let ink = Color(red: 0.16, green: 0.14, blue: 0.12)
-    static let inkSoft = Color(red: 0.32, green: 0.30, blue: 0.27)
-    static let accent = Color(red: 0.80, green: 0.41, blue: 0.20) // 陶土橙
-    static let accentSoft = Color(red: 0.93, green: 0.76, blue: 0.58)
-    static let card = Color(red: 1.0, green: 1.0, blue: 0.99)
-    static let divider = Color(red: 0.88, green: 0.85, blue: 0.79)
+    static var bg: Color { isDark() ? Color(red: 0.10, green: 0.09, blue: 0.08) : Color(red: 0.98, green: 0.96, blue: 0.92) }
+    static var panel: Color { isDark() ? Color(red: 0.15, green: 0.14, blue: 0.13) : Color(red: 0.99, green: 0.98, blue: 0.95) }
+    static var ink: Color { isDark() ? Color(red: 0.96, green: 0.93, blue: 0.88) : Color(red: 0.16, green: 0.14, blue: 0.12) }
+    static var inkSoft: Color { isDark() ? Color(red: 0.72, green: 0.69, blue: 0.64) : Color(red: 0.32, green: 0.30, blue: 0.27) }
+    static let accent = Color(red: 0.80, green: 0.41, blue: 0.20)
+    static var accentSoft: Color { isDark() ? Color(red: 0.38, green: 0.22, blue: 0.14) : Color(red: 0.93, green: 0.76, blue: 0.58) }
+    static var card: Color { isDark() ? Color(red: 0.20, green: 0.19, blue: 0.18) : Color(red: 1.0, green: 1.0, blue: 0.99) }
+    static var divider: Color { isDark() ? Color(red: 0.30, green: 0.28, blue: 0.25) : Color(red: 0.88, green: 0.85, blue: 0.79) }
     
     // 液态玻璃效果（macOS 14+）
     static func glassmorphism() -> some View {
