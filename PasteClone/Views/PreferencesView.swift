@@ -81,7 +81,25 @@ struct PreferencesView: View {
             }
             
             Divider()
-            
+
+            // 更新日志
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("更新日志").font(.caption).foregroundColor(PCTheme.inkSoft)
+                    Spacer()
+                    Text("v\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—")")
+                        .font(.caption2.monospaced())
+                        .foregroundColor(PCTheme.inkSoft)
+                }
+                Text("• 统一为单一正式版本，后续更新以此版本为准\n• 修复历史记录按钮粘贴时的目标应用焦点与时序\n• 支持自动、浅色、深色外观模式\n• 增加一键构建、验证与发布流程")
+                    .font(.caption)
+                    .foregroundColor(PCTheme.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(10)
+            .background(PCTheme.card)
+            .cornerRadius(8)
+
             // 捐款
             VStack(alignment: .leading, spacing: 10) {
                 Text("支持开发").font(.caption).foregroundColor(PCTheme.inkSoft)
@@ -97,7 +115,7 @@ struct PreferencesView: View {
             Spacer()
         }
         .padding(20)
-        .frame(width: 480, height: 400)
+        .frame(width: 480, height: 500)
         .background(PCTheme.panel)
         .preferredColorScheme(PCTheme.isDark(PCTheme.Mode(rawValue: appearanceMode) ?? .automatic, date: clock) ? .dark : .light)
         .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { clock = $0 }
