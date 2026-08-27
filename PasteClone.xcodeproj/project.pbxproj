@@ -17,6 +17,7 @@
 		B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C371CE09637BAAC2B622848 /* PasteCloneApp.swift */; };
 		BFC542849E58F1B1D7B11E83 /* HotkeyConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */; };
 		D103C638E9E3656100F21154 /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CA98672F82298957871034 /* ClipboardItem.swift */; };
+		D51407AC8B6D6761FBB858B7 /* HotkeyRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300856414D3AB50D07EF04D8 /* HotkeyRecorder.swift */; };
 		E8807ED80CF7B3804446A71C /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F9F68D96B904DBEE5F8E77D /* PreferencesView.swift */; };
 		FAFB959DF78CD5ECDFFAC9E8 /* HistoryPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0CFF028058849E88E94D9B /* HistoryPanelView.swift */; };
 /* End PBXBuildFile section */
@@ -26,6 +27,7 @@
 		1C371CE09637BAAC2B622848 /* PasteCloneApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteCloneApp.swift; sourceTree = "<group>"; };
 		1E7F58D31159AD3D60E6F859 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2E9E07AA1D6B537EFE4D592B /* HistoryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryRow.swift; sourceTree = "<group>"; };
+		300856414D3AB50D07EF04D8 /* HotkeyRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyRecorder.swift; sourceTree = "<group>"; };
 		3C717F7BFA847E23FB761C5F /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		3F9F68D96B904DBEE5F8E77D /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		61CA98672F82298957871034 /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
@@ -45,6 +47,7 @@
 			children = (
 				0A0CFF028058849E88E94D9B /* HistoryPanelView.swift */,
 				2E9E07AA1D6B537EFE4D592B /* HistoryRow.swift */,
+				300856414D3AB50D07EF04D8 /* HotkeyRecorder.swift */,
 				3F9F68D96B904DBEE5F8E77D /* PreferencesView.swift */,
 				3C717F7BFA847E23FB761C5F /* Theme.swift */,
 			);
@@ -187,6 +190,7 @@
 				733D4C6367023DA970BE579A /* HistoryRow.swift in Sources */,
 				BFC542849E58F1B1D7B11E83 /* HotkeyConfiguration.swift in Sources */,
 				8E29848A6863AC4E5651DB5D /* HotkeyManager.swift in Sources */,
+				D51407AC8B6D6761FBB858B7 /* HotkeyRecorder.swift in Sources */,
 				B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */,
 				E8807ED80CF7B3804446A71C /* PreferencesView.swift in Sources */,
 				00833827F41533C12FE6BCC6 /* Theme.swift in Sources */,

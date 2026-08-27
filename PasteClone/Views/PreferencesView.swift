@@ -7,17 +7,24 @@ struct PreferencesView: View {
     @AppStorage("maxItems") private var maxItems = 1000
     @AppStorage("hotkeyEnabled") private var hotkeyEnabled = true
     @AppStorage("hotkeyPreset") private var hotkeyPreset = HotkeyPreset.shiftCommandV.rawValue
+    @AppStorage("customHotkeyKeyCode") private var customKeyCode = 0
+    @AppStorage("customHotkeyModifiers") private var customModifiers = 0
     @AppStorage("donationURL") private var donationURL = "https://github.com/2ws7gfh8z5-dot/PasteClone#支持开发"
+    @State private var showDonationPrompt = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("偏好设置").font(.system(size: 18, weight: .bold)).foregroundColor(PCTheme.ink)
+            
+            // 保留条目数
             Picker("保留条目", selection: $maxItems) {
                 Text("100").tag(100)
                 Text("500").tag(500)
                 Text("1000").tag(1000)
                 Text("2000").tag(2000)
             }.pickerStyle(.segmented)
+            
+            // 开机启动
             Toggle("开机启动", isOn: $launchAtLogin)
                 .onChange(of: launchAtLogin) { enabled in
                     do {
@@ -25,29 +32,64 @@ struct PreferencesView: View {
                         else { try SMAppService.mainApp.unregister() }
                     } catch { launchAtLogin = SMAppService.mainApp.status == .enabled }
                 }
-            Toggle("全局热键 (⇧⌘V)", isOn: $hotkeyEnabled)
+            
+            // 全局快捷键开关
+            Toggle("全局热键", isOn: $hotkeyEnabled)
                 .onChange(of: hotkeyEnabled) { enabled in
                     if enabled { HotkeyManager.shared.register() }
                     else { HotkeyManager.shared.unregister() }
                 }
-            Picker("呼出快捷键", selection: $hotkeyPreset) {
-                ForEach(HotkeyPreset.allCases) { preset in Text(preset.title).tag(preset.rawValue) }
+            
+            // 快捷键选择
+            if hotkeyEnabled {
+                VStack(alignment: .leading, spacing: 10) {
+                    Picker("快捷键预设", selection: $hotkeyPreset) {
+                        ForEach(HotkeyPreset.allCases.filter { $0 != .custom }) { preset in
+                            Text(preset.title).tag(preset.rawValue)
+                        }
+                        Divider()
+                        Text("自定义").tag(HotkeyPreset.custom.rawValue)
+                    }
+                    .onChange(of: hotkeyPreset) { _ in
+                        HotkeyManager.shared.register()
+                    }
+                    
+                    // 自定义快捷键编辑器
+                    if hotkeyPreset == HotkeyPreset.custom.rawValue {
+                        HotkeyDisplay(keyCode: UInt32(customKeyCode), modifiers: UInt32(customModifiers)) { code, mods in
+                            customKeyCode = Int(code)
+                            customModifiers = Int(mods)
+                            HotkeyPreset.saveCustomHotkey(keyCode: code, modifiers: mods)
+                            HotkeyManager.shared.register()
+                        }
+                        .padding(8)
+                        .background(PCTheme.accentSoft.opacity(0.15))
+                        .cornerRadius(8)
+                    }
+                }
+                .padding(10)
+                .background(PCTheme.card)
+                .cornerRadius(8)
             }
-            .onChange(of: hotkeyPreset) { _ in
-                if hotkeyEnabled { HotkeyManager.shared.register() }
-            }
+            
             Divider()
-            HStack {
-                Text("捐款链接")
-                TextField("https://…", text: $donationURL)
+            
+            // 捐款
+            VStack(alignment: .leading, spacing: 10) {
+                Text("支持开发").font(.caption).foregroundColor(PCTheme.inkSoft)
+                HStack {
+                    TextField("捐款链接", text: $donationURL)
+                    Button(action: { NSWorkspace.shared.open(URL(string: donationURL) ?? URL(string: "https://github.com/2ws7gfh8z5-dot/PasteClone")!) }) {
+                        Label("打开", systemImage: "arrow.up.right")
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
             }
-            Button { NSWorkspace.shared.open(URL(string: donationURL) ?? URL(string: "https://github.com/2ws7gfh8z5-dot/PasteClone")!) } label: {
-                Label("支持 PasteClone 开发", systemImage: "heart")
-            }
+            
             Spacer()
         }
         .padding(20)
-        .frame(width: 420, height: 300)
+        .frame(width: 480, height: 400)
         .background(PCTheme.panel)
     }
 }
