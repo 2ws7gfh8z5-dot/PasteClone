@@ -157,7 +157,6 @@ struct HistoryPanelView: View {
     }
     private func pasteSelected() { if let item = selectedItem { paste(item) } }
     private func paste(_ item: ClipboardItem) {
-        store.copy(item)
         onHide()
         _ = ActiveAppService.shared.restoreTargetApp()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { store.paste(item) }
