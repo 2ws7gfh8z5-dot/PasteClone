@@ -1,54 +1,113 @@
-# PasteClone
+# PasteClone 🚀
 
-PasteClone 是一款原生 macOS 剪贴板历史管理器：它在后台记录复制过的文本、图片、文件和富文本，并通过菜单栏或全局快捷键快速搜索、预览、固定和粘贴历史内容。
+一个优雅的 macOS 剪贴板管理工具，让复制粘贴变得简单丝滑。
 
-> 当前版本：1.0.0 · macOS 14 Sonoma 或更高版本 · Apple Silicon / Intel Mac
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
+![Swift 5.0+](https://img.shields.io/badge/Swift-5.0%2B-orange)
+![License MIT](https://img.shields.io/badge/License-MIT-green)
 
-## 快速开始
+---
 
-1. 用 Xcode 打开 `PasteClone.xcodeproj`。
-2. 选择 `PasteClone` scheme，运行到本机 Mac。
-3. 应用启动后会出现在菜单栏，不会占用 Dock 位置。
-4. 复制一段文字，再按 `⇧⌘V` 打开历史面板，选择内容并按 `Enter` 粘贴。
+## ✨ 主要特性
 
-完整使用说明见：[用户使用说明书](USER_GUIDE.md)。
+- 📋 **完整剪贴板历史** - 保存最多 1000+ 条记录，支持文本、图片、文件
+- ⌨️ **全局快捷键** - 3 个预设快捷键 + 完全自定义
+- 🎯 **一键粘贴** - 点击历史项自动粘贴到任何应用
+- 📌 **智能组织** - 收藏夹、置顶、搜索、按应用过滤
+- 🎨 **Anthropic 手绘风格** - 暖色系 UI，舒适视觉体验
+- 🔧 **系统集成** - 菜单栏驻留，开机启动支持
 
-交流与反馈：`15665874885@163.com`。欢迎反馈问题、功能建议和使用体验。
+---
 
-## 主要功能
+## 🚀 快速开始
 
-- 自动记录文本、图片、文件、RTF/RTFD 富文本和颜色剪贴板内容
-- 历史搜索、按来源应用搜索、固定重要内容
-- 收藏分类与筛选
-- 双击、回车或右键粘贴
-- 粘贴队列（按顺序逐项粘贴）
-- 全局 `⇧⌘V` 快捷键呼出历史面板
-- 可设置历史保留数量、开机启动和全局热键
-- 面板内 `⌘C` 复制选中历史，`⌘V` 粘贴选中历史；呼出面板的全局快捷键可在偏好设置中切换
-- 本地 JSON 持久化，不需要账号，不上传剪贴板数据
+### 安装
 
-## 支持开发
+1. 从 [Release 页面](https://github.com/2ws7gfh8z5-dot/PasteClone/releases) 下载 `PasteClone.dmg`
+2. 将 `PasteClone.app` 拖入 Applications 文件夹
+3. 启动应用，根据提示授予 Accessibility 权限
 
-如果 PasteClone 对你有帮助，可以通过 [GitHub Sponsors](https://github.com/sponsors/2ws7gfh8z5-dot) 支持开发，也可以在偏好设置中配置你自己的捐款链接。商业合作、捐款方式和产品反馈可发送至 `15665874885@163.com`。
+### 首次使用
 
-## 开发与构建
+1. 打开 PasteClone，应用会进入菜单栏
+2. 按 `⇧⌘V` 打开剪贴板历史
+3. 复制任意内容，自动记录到历史
+4. 点击历史项可直接粘贴到前台应用
 
-项目使用原生 SwiftUI/AppKit 和 XcodeGen，不依赖第三方库。已有 `.xcodeproj` 可直接持续开发：
+---
 
-```bash
-xcodebuild -project PasteClone.xcodeproj \
-  -scheme PasteClone \
-  -configuration Debug \
-  -sdk macosx build \
-  CODE_SIGNING_ALLOWED=NO
-```
+## ⌨️ 快捷键
 
-源代码按 `Models`、`Services`、`Views` 分组。剪贴板历史默认保存在：
+| 操作 | 默认快捷键 |
+|------|-----------|
+| 打开历史 | `⇧⌘V` |
+| 粘贴 | `↩` |
+| 复制 | `⌘C` |
+| 删除 | `⌫` |
+| 置顶 | `⌘P` |
+| 搜索 | `⌘F` |
+| 快速选择 | `⌘1`~`⌘9` |
 
-`~/Library/Application Support/PasteClone/history.json`
+👉 [完整快捷键指南](./KEYBOARD_SHORTCUTS.md)
 
-## 注意
+---
 
-- PasteClone 只能记录应用启动之后发生的新复制操作；不会读取启动前的系统历史。
-- 自动粘贴依赖 macOS 向前台应用发送 `⌘V`。如果目标应用不接受模拟键盘事件，请使用面板中的复制/粘贴流程或在目标应用手动按 `⌘V`。
-- 请只在可信的本机环境运行剪贴板管理器，因为剪贴板可能包含密码、验证码和隐私信息。
+## 📚 功能详解
+
+### 剪贴板历史
+- 自动监控和保存所有复制内容
+- 支持文本、RTF、图片、文件、颜色
+- 去重：自动识别重复内容
+- 按应用名称搜索
+
+### 收藏夹与置顶
+- 创建自定义收藏夹分类
+- 置顶重要项目（不会被清除）
+- 独立管理收藏夹
+
+### 快捷键系统
+- 3 个预设快捷键随意切换
+- 完全自定义任意按键组合
+- 在偏好设置中实时编辑
+
+### 粘贴队列
+- 堆栈式粘贴多个项目
+- 按顺序依次应用到前台应用
+
+👉 [详细功能列表](./FEATURES.md)
+
+---
+
+## 💰 支持开发
+
+PasteClone 是免费开源项目。如果您觉得有帮助，考虑支持开发：
+
+- 🌟 GitHub 上点个 Star
+- 💬 反馈建议和 Bug 报告
+- 📧 邮箱联系：[15665874885@163.com](mailto:15665874885@163.com)
+- 🎁 通过 GitHub Sponsors 捐赠
+
+---
+
+## 🔧 系统需求
+
+- **macOS 14.0** 或更新版本
+- **Accessibility 权限** - 用于全局快捷键监听
+
+---
+
+## 📝 许可证
+
+MIT License - 详见 [LICENSE](./LICENSE)
+
+---
+
+## 🔗 链接
+
+- [GitHub 仓库](https://github.com/2ws7gfh8z5-dot/PasteClone)
+- [Release 下载](https://github.com/2ws7gfh8z5-dot/PasteClone/releases)
+- [问题反馈](https://github.com/2ws7gfh8z5-dot/PasteClone/issues)
+
+---
+
+**PasteClone** - 让剪贴板管理变得优雅 ✨
