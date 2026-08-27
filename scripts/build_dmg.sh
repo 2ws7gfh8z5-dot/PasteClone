@@ -5,8 +5,8 @@ PROJECT_DIR="/Users/huaziyi/Desktop/pasteclone"
 BUILD_DIR="$PROJECT_DIR/build"
 APP_NAME="PasteClone"
 DERIVE_DATA="$BUILD_DIR/DerivedData"
-DMG_PATH="$BUILD_DIR/PasteClone-1.2.2.dmg"
-ZIP_PATH="$BUILD_DIR/PasteClone-1.2.2.zip"
+DMG_PATH="$BUILD_DIR/PasteClone-1.2.3.dmg"
+ZIP_PATH="$BUILD_DIR/PasteClone-1.2.3.zip"
 TEMP_DMG="$(mktemp -u /tmp/PasteClone-temp.XXXXXX).dmg"
 trap 'rm -f "$TEMP_DMG"' EXIT
 

@@ -1,3 +1,34 @@
+# v1.2.3 (2026-08-27)
+
+### Bug Fixes
+- 修复热键开关启动时不生效：现在仅在设置开启时才注册 Carbon 热键
+- 修复固定项与重复内容逻辑：同 hash 的固定项置顶而不是新增副本
+- 修复 RTFD 写回类型错误：根据 `richTextType` 字段使用正确 pasteboard 类型
+- 修复 `suppressNextChange` 可能吞掉下一次真实复制：改用 `suppressedChangeCount` 精确匹配
+- 修复快捷键名称显示不正确：`keyCodeToString` 改用 Carbon kVK 常量字典替代连续偏移假设
+- 修复 `captureTargetApp` 忽略辅助进程（osascript/System Events）导致目标 App 记录错误
+
+### Improvements
+- 偏好设置窗口改为 ScrollView，避免隐私排除列表多时溢出
+- 偏好设置打开时同步真实 `SMAppService` 开机启动状态
+- 历史容量管理统一为 `ClipboardStore.trimmed`，固定项始终保留
+- JSON 改为原子写入 `.atomic`，读写失败记录 NSLog 而非静默忽略
+- SHA-256 去重扩展至 RTF 和图片
+- 删除冗余的 `PasteHelper.swift`（功能已在 `ClipboardStore` 实现）
+
+# PasteClone v1.2.3
+
+## v1.2.3
+
+- 新增按 App 排除的隐私规则，可阻止记录密码管理器等敏感来源。
+- 修复应用自身写入剪贴板后可能误吞下一次真实复制的问题。
+- 修复固定项目导致历史容量超限的问题；固定项目始终保留。
+- 历史数据改为原子写入并记录读写错误，降低数据损坏风险。
+- 新增辅助功能权限检查；一键粘贴会按系统规范请求授权。
+- 补全原生颜色剪贴板内容记录，并使用 SHA-256 识别图片与富文本。
+- 主面板加入原生材质、暖色半透明叠层与圆角描边，强化液态玻璃观感。
+- 移除首次启动捐款弹窗，捐款入口保留在偏好设置中。
+
 # PasteClone v1.2.2
 
 ## v1.2.2

@@ -10,7 +10,7 @@ class ClipboardStore: ObservableObject {
 
     private let monitor = ClipboardMonitor()
     private let saveURL: URL
-    private var suppressNextChange = false
+    private var suppressedChangeCount: Int?
 
     var collections: [String] {
         let names = items.compactMap(\.collectionName)
@@ -39,29 +39,34 @@ class ClipboardStore: ObservableObject {
         saveURL = dir.appendingPathComponent("history.json")
         load()
 
-        monitor.onChange = { [weak self] item in
-            guard let self, let item else { return }
-            if self.suppressNextChange { self.suppressNextChange = false; return }
+        monitor.onChange = { [weak self] changeCount, item in
+            guard let self else { return }
+            if self.suppressedChangeCount == changeCount {
+                self.suppressedChangeCount = nil
+                return
+            }
+            guard let item else { return }
             DispatchQueue.main.async { self.add(item) }
         }
         monitor.start()
     }
 
     private func add(_ item: ClipboardItem) {
-        items.removeAll { $0.contentHash == item.contentHash && !$0.isPinned }
-        items.insert(item, at: 0)
+        if let pinnedIndex = items.firstIndex(where: { $0.contentHash == item.contentHash && $0.isPinned }) {
+            let pinned = items.remove(at: pinnedIndex)
+            items.removeAll { $0.contentHash == item.contentHash }
+            items.insert(pinned, at: 0)
+        } else {
+            items.removeAll { $0.contentHash == item.contentHash }
+            items.insert(item, at: 0)
+        }
         let configuredLimit = UserDefaults.standard.object(forKey: "maxItems") as? Int ?? 1000
         let limit = max(100, configuredLimit)
-        if items.count > limit {
-            let pinned = items.filter(\.isPinned)
-            let unpinned = Array(items.filter { !$0.isPinned }.prefix(limit))
-            items = pinned + unpinned
-        }
+        items = Self.trimmed(items, limit: limit)
         save()
     }
 
     func paste(_ item: ClipboardItem, synthesizeKeypress: Bool = true) {
-        suppressNextChange = true
         writeToPasteboard(item)
         if synthesizeKeypress {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
@@ -71,7 +76,6 @@ class ClipboardStore: ObservableObject {
     }
 
     func copy(_ item: ClipboardItem) {
-        suppressNextChange = true
         writeToPasteboard(item)
     }
 
@@ -80,7 +84,7 @@ class ClipboardStore: ObservableObject {
         pb.clearContents()
         switch item.type {
         case .text:   pb.setString(item.textContent ?? "", forType: .string)
-        case .rtf:    if let d = item.rtfData { pb.setData(d, forType: .rtf) }
+        case .rtf:    if let d = item.rtfData { pb.setData(d, forType: NSPasteboard.PasteboardType(item.richTextType ?? NSPasteboard.PasteboardType.rtf.rawValue)) }
         case .image:
             if let d = item.imageData, let img = NSImage(data: d) { pb.writeObjects([img]) }
         case .file:
@@ -92,9 +96,17 @@ class ClipboardStore: ObservableObject {
             }
         case .unknown: break
         }
+        suppressedChangeCount = pb.changeCount
+    }
+
+    static func trimmed(_ items: [ClipboardItem], limit: Int) -> [ClipboardItem] {
+        let pinned = items.filter(\.isPinned)
+        let available = max(0, limit - pinned.count)
+        return pinned + Array(items.filter { !$0.isPinned }.prefix(available))
     }
 
     private static func synthesizePaste() {
+        guard AXIsProcessTrustedWithOptions([kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary) else { return }
         let src = CGEventSource(stateID: .hidSystemState)
         guard let down = CGEvent(keyboardEventSource: src, virtualKey: 9, keyDown: true),
               let up   = CGEvent(keyboardEventSource: src, virtualKey: 9, keyDown: false) else { return }
@@ -143,13 +155,20 @@ class ClipboardStore: ObservableObject {
     }
 
     private func save() {
-        guard let data = try? JSONEncoder().encode(items) else { return }
-        try? data.write(to: saveURL)
+        do {
+            let data = try JSONEncoder().encode(items)
+            try data.write(to: saveURL, options: .atomic)
+        } catch {
+            NSLog("PasteClone could not save history: %@", error.localizedDescription)
+        }
     }
 
     private func load() {
-        guard let data = try? Data(contentsOf: saveURL),
-              let loaded = try? JSONDecoder().decode([ClipboardItem].self, from: data) else { return }
-        items = loaded
+        guard FileManager.default.fileExists(atPath: saveURL.path) else { return }
+        do {
+            items = try JSONDecoder().decode([ClipboardItem].self, from: Data(contentsOf: saveURL))
+        } catch {
+            NSLog("PasteClone could not load history: %@", error.localizedDescription)
+        }
     }
 }

@@ -13,17 +13,28 @@
 		733D4C6367023DA970BE579A /* HistoryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E9E07AA1D6B537EFE4D592B /* HistoryRow.swift */; };
 		8412D97B67708A7C2D820A00 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1E7F58D31159AD3D60E6F859 /* Assets.xcassets */; };
 		8E29848A6863AC4E5651DB5D /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */; };
+		8E97539886B8C6A311F47C7C /* PrivacyRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A9F68B2781A998BF1B9D024 /* PrivacyRules.swift */; };
 		8FA23AD0E2A34E25583F6328 /* ClipboardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF8A888CD900B05A484938D /* ClipboardStore.swift */; };
 		9D25D7CC76DA9A1A7741C84A /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */; };
-		A699DBD903A2679150FAEBAB /* PasteHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 475EE54ED197B30983B54C45 /* PasteHelper.swift */; };
 		A879451A2C07C54F45BAA3F9 /* ActiveAppService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF120C51C654A8B8642765E /* ActiveAppService.swift */; };
 		B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C371CE09637BAAC2B622848 /* PasteCloneApp.swift */; };
 		BFC542849E58F1B1D7B11E83 /* HotkeyConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */; };
+		C1444067ACF8B929ED633B14 /* ClipboardStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83EBAE930484B45A2C53C293 /* ClipboardStoreTests.swift */; };
 		D103C638E9E3656100F21154 /* ClipboardItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61CA98672F82298957871034 /* ClipboardItem.swift */; };
 		D51407AC8B6D6761FBB858B7 /* HotkeyRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300856414D3AB50D07EF04D8 /* HotkeyRecorder.swift */; };
 		E8807ED80CF7B3804446A71C /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F9F68D96B904DBEE5F8E77D /* PreferencesView.swift */; };
 		FAFB959DF78CD5ECDFFAC9E8 /* HistoryPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0CFF028058849E88E94D9B /* HistoryPanelView.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		35C24175D75EB5AB3139FD50 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0B8AE7C587B52E7479350BC3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EE5D210A8642536D13562AB0;
+			remoteInfo = PasteClone;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		055671FE7CE344EE30481BB5 /* DonationPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DonationPromptView.swift; sourceTree = "<group>"; };
@@ -34,9 +45,11 @@
 		300856414D3AB50D07EF04D8 /* HotkeyRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyRecorder.swift; sourceTree = "<group>"; };
 		3C717F7BFA847E23FB761C5F /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		3F9F68D96B904DBEE5F8E77D /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
-		475EE54ED197B30983B54C45 /* PasteHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteHelper.swift; sourceTree = "<group>"; };
 		48E2C5F02DD823180CD2A6AF /* GitHubProfileUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitHubProfileUpdater.swift; sourceTree = "<group>"; };
 		61CA98672F82298957871034 /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
+		6A9F68B2781A998BF1B9D024 /* PrivacyRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyRules.swift; sourceTree = "<group>"; };
+		6DEBE7841F970D99EDDECCCD /* PasteCloneTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PasteCloneTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		83EBAE930484B45A2C53C293 /* ClipboardStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStoreTests.swift; sourceTree = "<group>"; };
 		A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyConfiguration.swift; sourceTree = "<group>"; };
 		A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
 		DAF8A888CD900B05A484938D /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
@@ -63,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				C18DBB7DB1018C67FB5E4D28 /* PasteClone */,
+				5D054A92F51DCECF833301EF /* PasteCloneTests */,
 				B8383879C02A1271581F06B7 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -76,10 +90,19 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
+		5D054A92F51DCECF833301EF /* PasteCloneTests */ = {
+			isa = PBXGroup;
+			children = (
+				83EBAE930484B45A2C53C293 /* ClipboardStoreTests.swift */,
+			);
+			path = PasteCloneTests;
+			sourceTree = "<group>";
+		};
 		B8383879C02A1271581F06B7 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				EEFBB54BC6E393DA74F928E3 /* PasteClone.app */,
+				6DEBE7841F970D99EDDECCCD /* PasteCloneTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -100,7 +123,7 @@
 				48E2C5F02DD823180CD2A6AF /* GitHubProfileUpdater.swift */,
 				A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */,
 				E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */,
-				475EE54ED197B30983B54C45 /* PasteHelper.swift */,
+				6A9F68B2781A998BF1B9D024 /* PrivacyRules.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -120,6 +143,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		002D0027966634961E3F1D50 /* PasteCloneTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A8DBE5BF99EFC8BA9E58B8CD /* Build configuration list for PBXNativeTarget "PasteCloneTests" */;
+			buildPhases = (
+				996B78E216881EF72E6A6511 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E2362E7A48E04AE581FA2538 /* PBXTargetDependency */,
+			);
+			name = PasteCloneTests;
+			packageProductDependencies = (
+			);
+			productName = PasteCloneTests;
+			productReference = 6DEBE7841F970D99EDDECCCD /* PasteCloneTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		EE5D210A8642536D13562AB0 /* PasteClone */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 73A78CD19C99D0D455E3757E /* Build configuration list for PBXNativeTarget "PasteClone" */;
@@ -147,6 +188,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					002D0027966634961E3F1D50 = {
+						ProvisioningStyle = Automatic;
+					};
 					EE5D210A8642536D13562AB0 = {
 						ProvisioningStyle = Automatic;
 					};
@@ -167,6 +211,7 @@
 			projectRoot = "";
 			targets = (
 				EE5D210A8642536D13562AB0 /* PasteClone */,
+				002D0027966634961E3F1D50 /* PasteCloneTests */,
 			);
 		};
 /* End PBXProject section */
@@ -199,13 +244,29 @@
 				8E29848A6863AC4E5651DB5D /* HotkeyManager.swift in Sources */,
 				D51407AC8B6D6761FBB858B7 /* HotkeyRecorder.swift in Sources */,
 				B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */,
-				A699DBD903A2679150FAEBAB /* PasteHelper.swift in Sources */,
 				E8807ED80CF7B3804446A71C /* PreferencesView.swift in Sources */,
+				8E97539886B8C6A311F47C7C /* PrivacyRules.swift in Sources */,
 				00833827F41533C12FE6BCC6 /* Theme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		996B78E216881EF72E6A6511 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1444067ACF8B929ED633B14 /* ClipboardStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E2362E7A48E04AE581FA2538 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EE5D210A8642536D13562AB0 /* PasteClone */;
+			targetProxy = 35C24175D75EB5AB3139FD50 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		05703F512145973B2728FCC2 /* Debug */ = {
@@ -237,6 +298,22 @@
 				SDKROOT = macosx;
 			};
 			name = Release;
+		};
+		946264FDA4A60A705AF7DF34 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.you.PasteCloneTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PasteClone.app/Contents/MacOS/PasteClone";
+			};
+			name = Debug;
 		};
 		9591F98D1537F162BEE03B14 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -361,6 +438,22 @@
 			};
 			name = Debug;
 		};
+		E12D5D336C730E0A57BB133F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.you.PasteCloneTests;
+				SDKROOT = macosx;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PasteClone.app/Contents/MacOS/PasteClone";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -378,6 +471,15 @@
 			buildConfigurations = (
 				9951F727304F497474E30A1F /* Debug */,
 				9591F98D1537F162BEE03B14 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A8DBE5BF99EFC8BA9E58B8CD /* Build configuration list for PBXNativeTarget "PasteCloneTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				946264FDA4A60A705AF7DF34 /* Debug */,
+				E12D5D336C730E0A57BB133F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

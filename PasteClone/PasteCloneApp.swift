@@ -27,13 +27,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         HotkeyManager.shared.onTrigger = { [weak self] in self?.togglePanel() }
-        HotkeyManager.shared.register()
-        
-        // 首次启动提示（仅一次）
-        if !UserDefaults.standard.bool(forKey: "hasShownDonationPrompt") {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.showDonationPrompt()
-            }
+        if UserDefaults.standard.object(forKey: "hotkeyEnabled") as? Bool ?? true {
+            HotkeyManager.shared.register()
         }
     }
 
@@ -66,17 +61,4 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel = p
     }
     
-    private func showDonationPrompt() {
-        let alert = NSAlert()
-        alert.messageText = "支持 PasteClone"
-        alert.informativeText = "PasteClone 是免费开源项目。如果您觉得有帮助，考虑通过 GitHub Sponsors 支持开发？"
-        alert.addButton(withTitle: "支持开发")
-        alert.addButton(withTitle: "下次再说")
-        
-        if alert.runModal() == .alertFirstButtonReturn {
-            NSWorkspace.shared.open(URL(string: "https://github.com/2ws7gfh8z5-dot/PasteClone#support-development")!)
-        }
-        
-        UserDefaults.standard.set(true, forKey: "hasShownDonationPrompt")
-    }
 }

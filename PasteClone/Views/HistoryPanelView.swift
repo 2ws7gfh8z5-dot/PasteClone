@@ -24,7 +24,10 @@ struct HistoryPanelView: View {
             footer
         }
         .frame(width: 380, height: 480)
-        .background(PCTheme.panel)
+        .background(.ultraThinMaterial)
+        .background(PCTheme.panel.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).stroke(.white.opacity(0.16), lineWidth: 1))
         .preferredColorScheme(PCTheme.isDark(PCTheme.Mode(rawValue: appearanceMode) ?? .automatic, date: clock) ? .dark : .light)
         .focusable()
         .focused($panelFocused)
@@ -123,7 +126,8 @@ struct HistoryPanelView: View {
             .menuStyle(.borderlessButton).frame(width: 24)
         }
         .padding(.horizontal, 10).padding(.vertical, 8)
-        .background(PCTheme.panel)
+        .background(.ultraThinMaterial)
+        .background(PCTheme.panel.opacity(0.72))
     }
 
     @ViewBuilder var emptyState: some View {

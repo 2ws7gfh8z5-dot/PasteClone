@@ -6,7 +6,7 @@
 set -e
 
 REPO="2ws7gfh8z5-dot/PasteClone"
-VERSION="1.2.2"
+VERSION="1.2.3"
 BUILD_DIR="./build"
 RELEASE_NOTES="## 🎉 PasteClone v${VERSION}
 
