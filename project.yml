@@ -10,6 +10,8 @@ settings:
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     ENABLE_HARDENED_RUNTIME: YES
     CODE_SIGN_STYLE: Automatic
+    ARCHS: "arm64 x86_64"
+    ONLY_ACTIVE_ARCH: NO
 targets:
   PasteClone:
     type: application
@@ -33,8 +35,8 @@ targets:
       properties:
         CFBundleName: PasteClone
         CFBundleDisplayName: PasteClone
-        CFBundleShortVersionString: "1.2.3"
-        CFBundleVersion: "6"
+        CFBundleShortVersionString: "1.3.0"
+        CFBundleVersion: "7"
         LSMinimumSystemVersion: "14.0"
         LSUIElement: true
         NSHumanReadableCopyright: "Copyright 2024. All rights reserved."

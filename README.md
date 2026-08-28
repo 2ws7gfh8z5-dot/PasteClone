@@ -127,3 +127,9 @@ MIT License - 详见 [LICENSE](./LICENSE)
 ---
 
 **PasteClone** - 让剪贴板管理变得优雅 ✨
+
+## v1.3.0 发布说明（2026-08-28）
+- macOS Universal：支持 Apple Silicon 与 Intel。
+- 面板弹出/收回和一键粘贴按钮交互加入贝塞尔曲线动效，并尊重 Reduce Motion。
+- Windows/Linux：当前未发布可用客户端；请勿将 macOS 安装包用于其他系统。
+- 安装包：GitHub Releases 提供 `.dmg` 与 `.zip`。

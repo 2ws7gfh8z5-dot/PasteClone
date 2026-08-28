@@ -9,6 +9,7 @@ struct HistoryRow: View {
     var onPaste: () -> Void = {}
     @State private var hovering = false
     @State private var showCollectionMenu = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 10) {
@@ -45,6 +46,7 @@ struct HistoryRow: View {
         .contentShape(Rectangle())
         .onTapGesture { onSelect() }
         .onHover { hovering = $0 }
+        .animation(reduceMotion ? nil : PCTheme.bezier(duration: 0.22), value: hovering)
         .onTapGesture(count: 2) { onPaste() }
         .contextMenu { contextMenu }
     }
@@ -91,7 +93,8 @@ struct HistoryRow: View {
                     .offset(x: 3, y: 3)
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PCButtonStyle())
+        .scaleEffect(hovering && !reduceMotion ? 1.04 : 1)
         .help("粘贴到当前输入框")
         .accessibilityLabel("粘贴到当前输入框")
     }

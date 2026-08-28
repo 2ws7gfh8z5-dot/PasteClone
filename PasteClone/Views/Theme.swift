@@ -114,3 +114,19 @@ struct IconGenerator {
         }
     }
 }
+
+
+struct PCButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.94 : 1)
+            .animation(reduceMotion ? nil : PCTheme.bezier(duration: 0.18), value: configuration.isPressed)
+    }
+}
+
+extension PCTheme {
+    static func bezier(duration: Double) -> Animation {
+        .timingCurve(0.16, 1.0, 0.3, 1.0, duration: duration)
+    }
+}

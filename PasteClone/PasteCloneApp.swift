@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = ClipboardStore()
     private var panel: NSPanel?
     private var hosting: NSHostingView<HistoryPanelView>?
+    private var panelAnimating = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -40,17 +41,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if panel == nil { makePanel() }
         guard let panel else { return }
         if panel.isVisible {
-            panel.orderOut(nil)
+            hidePanel()
         } else {
             ActiveAppService.shared.captureTargetApp()
             panel.center()
-            panel.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            showPanel(panel)
         }
     }
 
     private func makePanel() {
-        let view = HistoryPanelView(store: store) { [weak self] in self?.panel?.orderOut(nil) }
+        let view = HistoryPanelView(store: store) { [weak self] in self?.hidePanel() }
         let host = NSHostingView(rootView: view)
         hosting = host
         let p = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 380, height: 480),
@@ -59,6 +59,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         p.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
         p.contentView = host
         panel = p
+    }
+
+    private func showPanel(_ panel: NSPanel) {
+        guard !panelAnimating else { return }
+        panelAnimating = true
+        let target = panel.frame
+        let collapsed = NSRect(x: target.midX - target.width * 0.94 / 2,
+                               y: target.midY - target.height * 0.94 / 2,
+                               width: target.width * 0.94, height: target.height * 0.94)
+        panel.setFrame(collapsed, display: false)
+        panel.alphaValue = 0
+        panel.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.24
+            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1.0, 0.3, 1.0)
+            panel.animator().setFrame(target, display: true)
+            panel.animator().alphaValue = 1
+        } completionHandler: { [weak self] in self?.panelAnimating = false }
+    }
+
+    private func hidePanel() {
+        guard let panel, panel.isVisible, !panelAnimating else { return }
+        panelAnimating = true
+        let target = panel.frame
+        let collapsed = NSRect(x: target.midX - target.width * 0.94 / 2,
+                               y: target.midY - target.height * 0.94 / 2,
+                               width: target.width * 0.94, height: target.height * 0.94)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.16
+            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0.0, 1.0, 1.0)
+            panel.animator().setFrame(collapsed, display: true)
+            panel.animator().alphaValue = 0
+        } completionHandler: { [weak self, weak panel] in
+            panel?.orderOut(nil)
+            panel?.alphaValue = 1
+            if let panel { panel.setFrame(target, display: false) }
+            self?.panelAnimating = false
+        }
     }
     
 }
