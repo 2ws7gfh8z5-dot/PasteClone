@@ -20,7 +20,7 @@ jobs:
         if: runner.os == 'Windows'
         uses: compnerd/gha-setup-swift@eeda069c5bc95ac8a9ac5cea7d4f588ae5420ca5
         with:
-          swift-version: swift-5.9-release
+          swift-version: swift-5.9.2-release
           swift-build: 5.9.2-RELEASE
       - name: Swift version
         run: swift --version
