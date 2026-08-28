@@ -73,7 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.24
+            context.duration = AccessibilitySettings.reduceMotion ? 0 : 0.24
             context.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1.0, 0.3, 1.0)
             panel.animator().setFrame(target, display: true)
             panel.animator().alphaValue = 1
@@ -88,7 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                                y: target.midY - target.height * 0.94 / 2,
                                width: target.width * 0.94, height: target.height * 0.94)
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.16
+            context.duration = AccessibilitySettings.reduceMotion ? 0 : 0.16
             context.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0.0, 1.0, 1.0)
             panel.animator().setFrame(collapsed, display: true)
             panel.animator().alphaValue = 0

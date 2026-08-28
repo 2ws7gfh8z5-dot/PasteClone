@@ -2,6 +2,12 @@ import SwiftUI
 import AppKit
 
 /// Anthropic 手绘风格主题 + 液态玻璃效果
+enum AccessibilitySettings {
+    static var reduceMotion: Bool {
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
+}
+
 enum PCTheme {
     static let modeKey = "appearanceMode"
 

@@ -83,7 +83,10 @@ struct HistoryPanelView: View {
                 .padding(10)
             }
             .onChange(of: selectedID) { id in
-                if let id { withAnimation(.easeOut(duration: 0.12)) { proxy.scrollTo(id, anchor: .center) } }
+                if let id {
+                    let animation = AccessibilitySettings.reduceMotion ? nil : PCTheme.bezier(duration: 0.12)
+                    withAnimation(animation) { proxy.scrollTo(id, anchor: .center) }
+                }
             }
         }
     }
@@ -144,7 +147,8 @@ struct HistoryPanelView: View {
     }
 
     private func command(_ press: KeyPress, action: () -> Void) -> KeyPress.Result {
-        guard press.modifiers.contains(.command),
+        guard !searchFocused,
+              press.modifiers.contains(.command),
               !press.modifiers.contains(.shift),
               !press.modifiers.contains(.option),
               !press.modifiers.contains(.control) else { return .ignored }

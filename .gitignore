@@ -13,3 +13,6 @@ xcuserdata/
 # Swift Package Manager
 .swiftpm/
 **/.build/
+
+# Rust build artifacts
+**/target/
