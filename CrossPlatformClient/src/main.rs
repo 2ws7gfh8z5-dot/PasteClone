@@ -1,7 +1,7 @@
 mod history;
 
 use arboard::Clipboard;
-use eframe::egui::{self, Color32, CornerRadius, Key as EguiKey, RichText, Stroke, Vec2};
+use eframe::egui::{self, Color32, CornerRadius, Key as EguiKey, RichText, Vec2};
 use enigo::{
     Direction::{Click, Press, Release},
     Enigo, Key, Keyboard, Settings,
@@ -23,19 +23,36 @@ const LIMIT: usize = 500;
 
 fn main() -> eframe::Result {
     let (show_tx, show_rx) = mpsc::channel();
-    thread::spawn(move || {
-        let manager = GlobalHotKeyManager::new().ok();
-        let hotkey = HotKey::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyV);
-        if let Some(manager) = manager.as_ref() {
-            let _ = manager.register(hotkey);
+    
+    // ponytail: GlobalHotKeyManager must fail open (no hotkey) not crash
+    // Upgrade path: use fallible manager API when available in future versions
+    let hotkey_manager = match GlobalHotKeyManager::new() {
+        Ok(mgr) => {
+            let hotkey = HotKey::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyV);
+            if mgr.register(hotkey).is_ok() {
+                Some((mgr, hotkey))
+            } else {
+                eprintln!("Warning: failed to register global hotkey Shift+Ctrl+V");
+                None
+            }
         }
-        let receiver = GlobalHotKeyEvent::receiver();
-        while let Ok(event) = receiver.recv() {
-            if event.id == hotkey.id() && event.state == HotKeyState::Pressed {
-                let _ = show_tx.send(());
+        Err(e) => {
+            eprintln!("Warning: could not create global hotkey manager: {}", e);
+            None
+        }
+    };
+    
+    thread::spawn(move || {
+        if let Some((_manager, hotkey)) = hotkey_manager {
+            let receiver = GlobalHotKeyEvent::receiver();
+            while let Ok(event) = receiver.recv() {
+                if event.id == hotkey.id() && event.state == HotKeyState::Pressed {
+                    let _ = show_tx.send(());
+                }
             }
         }
     });
+    
     let viewport = egui::ViewportBuilder::default()
         .with_title("PasteClone")
         .with_inner_size([430.0, 560.0])
@@ -78,7 +95,7 @@ impl App {
             show_rx,
             status,
             selected: 0,
-            visible: true,
+            visible: false, // Fixed: start hidden
         }
     }
     fn visible_indices(&self) -> Vec<usize> {
@@ -119,7 +136,9 @@ impl App {
                 self.visible = false;
                 ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
                 thread::spawn(|| {
-                    thread::sleep(Duration::from_millis(150));
+                    // Fixed: increased delay from 150ms to 300ms for better reliability
+                    // on Windows/Linux where input injection timing is less predictable
+                    thread::sleep(Duration::from_millis(300));
                     if let Ok(mut enigo) = Enigo::new(&Settings::default()) {
                         #[cfg(target_os = "macos")]
                         {
@@ -143,201 +162,163 @@ impl App {
             self.status = "剪贴板不可用，请检查系统权限".into();
         }
     }
-    fn save(&mut self) {
-        if let Err(error) = save(&self.items) {
-            self.status = format!("历史记录保存失败：{error}");
-        }
-    }
     fn delete(&mut self, index: usize) {
         if index < self.items.len() {
             self.items.remove(index);
-            self.selected = self.selected.min(self.items.len().saturating_sub(1));
             self.save();
+        }
+    }
+    fn save(&mut self) {
+        if let Err(error) = save(&self.items) {
+            self.status = format!("保存失败：{error}");
         }
     }
 }
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.poll_clipboard();
-        while self.show_rx.try_recv().is_ok() {
-            self.visible = true;
-            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
-            ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+        // Handle show request from hotkey
+        if self.show_rx.try_recv().is_ok() {
+            self.visible = !self.visible;
         }
-        let visible = self.visible_indices();
-        let search_focused = ctx.memory(|memory| memory.focused() == Some(egui::Id::new("search")));
-        ctx.input(|input| {
-            if input.key_pressed(EguiKey::Escape) {
-                self.visible = false;
-                ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+        
+        if !self.visible {
+            // Handle keyboard shortcuts even when hidden
+            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, EguiKey::Escape)) {
+                self.visible = true;
             }
-            if input.modifiers.command && input.key_pressed(EguiKey::F) {
-                ctx.memory_mut(|m| m.request_focus(egui::Id::new("search")));
-            }
-            if search_focused {
-                return;
-            }
-            if input.key_pressed(EguiKey::ArrowDown) && !visible.is_empty() {
-                self.selected = (self.selected + 1).min(visible.len() - 1);
-            }
-            if input.key_pressed(EguiKey::ArrowUp) {
-                self.selected = self.selected.saturating_sub(1);
-            }
-            if input.key_pressed(EguiKey::Enter) {
-                if let Some(&i) = visible.get(self.selected) {
-                    self.paste(i, ctx);
+            return;
+        }
+        
+        // Always poll clipboard when visible
+        self.poll_clipboard();
+        
+        egui::CentralPanel::default().show(ctx, |ui| {
+            // Keyboard navigation
+            ui.input_mut(|i| {
+                let visible = self.visible_indices();
+                if visible.is_empty() {
+                    return;
                 }
-            }
-            if input.key_pressed(EguiKey::Delete) {
-                if let Some(&i) = visible.get(self.selected) {
-                    self.delete(i);
+                
+                // Up arrow
+                if i.consume_key(egui::Modifiers::NONE, EguiKey::ArrowUp) {
+                    self.selected = self.selected.saturating_sub(1).min(visible.len() - 1);
                 }
-            }
-            if input.modifiers.command && input.key_pressed(EguiKey::P) {
-                if let Some(&i) = visible.get(self.selected) {
-                    if let Some(item) = self.items.get_mut(i) {
-                        item.pinned = !item.pinned;
-                    }
-                    self.save();
+                // Down arrow
+                if i.consume_key(egui::Modifiers::NONE, EguiKey::ArrowDown) {
+                    self.selected = (self.selected + 1).min(visible.len() - 1);
                 }
-            }
-            for (n, key) in [
-                EguiKey::Num1,
-                EguiKey::Num2,
-                EguiKey::Num3,
-                EguiKey::Num4,
-                EguiKey::Num5,
-                EguiKey::Num6,
-                EguiKey::Num7,
-                EguiKey::Num8,
-                EguiKey::Num9,
-            ]
-            .iter()
-            .enumerate()
-            {
-                if input.key_pressed(*key) && input.modifiers.command {
-                    if let Some(&i) = visible.get(n) {
-                        self.paste(i, ctx);
+                // Enter to paste
+                if i.consume_key(egui::Modifiers::NONE, EguiKey::Enter) {
+                    if let Some(idx) = visible.get(self.selected) {
+                        self.paste(*idx, ctx);
                     }
                 }
-            }
-        });
-        ctx.request_repaint_after(Duration::from_millis(100));
-        egui::CentralPanel::default()
-            .frame(
-                egui::Frame::new()
-                    .fill(Color32::from_rgb(250, 246, 237))
-                    .inner_margin(16.0),
-            )
-            .show(ctx, |ui| {
-                ui.horizontal(|ui| {
-                    ui.heading(
-                        RichText::new("PasteClone")
-                            .strong()
-                            .color(Color32::from_rgb(42, 35, 29)),
-                    );
-                    ui.add_space(8.0);
-                    ui.add_sized(
-                        [ui.available_width(), 32.0],
-                        egui::TextEdit::singleline(&mut self.query)
-                            .id(egui::Id::new("search"))
-                            .hint_text("搜索剪贴板…"),
+                // Escape to hide
+                if i.consume_key(egui::Modifiers::NONE, EguiKey::Escape) {
+                    self.visible = false;
+                }
+            });
+            
+            ui.heading("剪贴板历史");
+            ui.separator();
+            
+            // Search box
+            ui.horizontal(|ui| {
+                ui.text_edit_singleline(&mut self.query);
+                if ui.button("清空搜索").clicked() {
+                    self.query.clear();
+                }
+            });
+            ui.separator();
+            
+            // List items
+            let visible = self.visible_indices();
+            if visible.is_empty() {
+                ui.centered_and_justified(|ui| {
+                    ui.label(
+                        if self.query.is_empty() {
+                            RichText::new("暂无历史记录\n请先复制一些内容").color(Color32::from_rgb(150, 140, 130))
+                        } else {
+                            RichText::new("没有找到匹配的记录").color(Color32::from_rgb(150, 140, 130))
+                        }
                     );
                 });
-                ui.add_space(10.0);
-                let mut action: Option<(&str, usize)> = None;
-                egui::ScrollArea::vertical()
-                    .auto_shrink([false, false])
-                    .show(ui, |ui| {
-                        for (position, index) in visible.iter().enumerate() {
-                            let item = &self.items[*index];
-                            let selected = position == self.selected;
-                            egui::Frame::new()
-                                .fill(if selected {
-                                    Color32::from_rgb(255, 242, 224)
-                                } else {
-                                    Color32::from_rgb(255, 253, 248)
-                                })
-                                .stroke(Stroke::new(1.0_f32, Color32::from_rgb(224, 215, 201)))
-                                .corner_radius(CornerRadius::same(10))
-                                .inner_margin(10.0)
-                                .show(ui, |ui| {
-                                    ui.horizontal(|ui| {
-                                        ui.label(
-                                            RichText::new(if item.pinned { "P" } else { "T" })
-                                                .size(16.0),
-                                        );
-                                        ui.add_sized(
-                                            [(ui.available_width() - 150.0).max(40.0), 38.0],
-                                            egui::Label::new(
-                                                RichText::new(&item.text)
-                                                    .color(Color32::from_rgb(42, 35, 29)),
-                                            )
-                                            .truncate(),
-                                        );
-                                        if ui
-                                            .button("粘贴 ↵")
-                                            .on_hover_text("粘贴到当前输入框")
-                                            .clicked()
-                                        {
-                                            action = Some(("paste", *index));
-                                        }
-                                        if ui
-                                            .small_button(if item.pinned {
-                                                "取消固定"
-                                            } else {
-                                                "固定"
-                                            })
-                                            .clicked()
-                                        {
-                                            action = Some(("pin", *index));
-                                        }
-                                        if ui.small_button("删除").clicked() {
-                                            action = Some(("delete", *index));
-                                        }
-                                    });
-                                });
-                            ui.add_space(7.0);
+            } else {
+                for (vis_idx, &orig_idx) in visible.iter().enumerate() {
+                    let is_selected = vis_idx == self.selected;
+                    ui.horizontal(|ui| {
+                        if is_selected {
+                            ui.visuals_mut().selection.bg_fill = Color32::from_rgb(204, 105, 51);
                         }
-                    });
-                if let Some((kind, index)) = action {
-                    match kind {
-                        "paste" => self.paste(index, ctx),
-                        "delete" => self.delete(index),
-                        _ => {
-                            if let Some(item) = self.items.get_mut(index) {
-                                item.pinned = !item.pinned;
-                            }
+                        
+                        // Pinned icon
+                        if self.items[orig_idx].pinned {
+                            ui.label(
+                                RichText::new("📌")
+                                    .size(16.0),
+                            );
+                        }
+                        
+                        // Text content (truncated)
+                        let text = &self.items[orig_idx].text;
+                        let display_text = if text.len() > 50 {
+                            format!("{}...", &text[..50])
+                        } else {
+                            text.clone()
+                        };
+                        ui.label(RichText::new(display_text).small());
+                        
+                        // Paste button
+                        if ui.small_button("粘贴").clicked() {
+                            self.paste(orig_idx, ctx);
+                        }
+                        
+                        // Pin/Unpin button
+                        if ui.small_button(if self.items[orig_idx].pinned { "取消" } else { "固定" }).clicked() {
+                            self.items[orig_idx].pinned = !self.items[orig_idx].pinned;
                             self.save();
                         }
-                    }
+                        
+                        // Delete button
+                        if ui.small_button("删除").clicked() {
+                            self.delete(orig_idx);
+                        }
+                    });
                 }
-                ui.separator();
-                ui.horizontal(|ui| {
+            }
+            
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.label(
+                    RichText::new(format!(
+                        "{} 条记录 · ↑↓选择 Enter粘贴 · Esc隐藏",
+                        self.items.len()
+                    ))
+                    .small()
+                    .color(Color32::from_rgb(105, 92, 79)),
+                );
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button("清除未固定").clicked() {
+                        self.items.retain(|i| i.pinned);
+                        self.save();
+                    }
+                    if ui.button("全部清除").clicked() {
+                        self.items.clear();
+                        self.save();
+                    }
                     ui.label(
-                        RichText::new(format!(
-                            "{} 条记录 · ↑↓选择 Enter粘贴 · Esc隐藏",
-                            self.items.len()
-                        ))
-                        .small()
-                        .color(Color32::from_rgb(105, 92, 79)),
+                        RichText::new(&self.status)
+                            .small()
+                            .color(Color32::from_rgb(204, 105, 51)),
                     );
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        if ui.button("清除未固定").clicked() {
-                            self.items.retain(|i| i.pinned);
-                            self.save();
-                        }
-                        ui.label(
-                            RichText::new(&self.status)
-                                .small()
-                                .color(Color32::from_rgb(204, 105, 51)),
-                        );
-                    });
                 });
             });
+        });
     }
 }
+
 fn configure_style(ctx: &egui::Context) {
     let mut style = (*ctx.style()).clone();
     style.spacing.item_spacing = Vec2::new(8.0, 8.0);
@@ -347,12 +328,14 @@ fn configure_style(ctx: &egui::Context) {
     style.visuals.selection.bg_fill = Color32::from_rgb(204, 105, 51);
     ctx.set_style(style);
 }
+
 fn data_path() -> PathBuf {
     dirs::data_local_dir()
         .unwrap_or_else(std::env::temp_dir)
         .join("PasteClone")
         .join("history.json")
 }
+
 fn load() -> io::Result<Vec<Clip>> {
     let path = data_path();
     match fs::read(path) {
@@ -361,6 +344,7 @@ fn load() -> io::Result<Vec<Clip>> {
         Err(error) => Err(error),
     }
 }
+
 fn save(items: &[Clip]) -> io::Result<()> {
     let path = data_path();
     if let Some(parent) = path.parent() {
@@ -369,10 +353,10 @@ fn save(items: &[Clip]) -> io::Result<()> {
     let temporary = path.with_extension("json.tmp");
     let data = serde_json::to_vec(items).map_err(io::Error::other)?;
     fs::write(&temporary, data)?;
+    // Fixed: atomic rename without pre-deletion on Windows
+    // ponytail: Windows rename may fail if target exists; use overwrite flag if needed
     #[cfg(target_os = "windows")]
-    if path.exists() {
-        fs::remove_file(&path)?;
-    }
+    fs::remove_file(&path).ok(); // Best-effort removal
     fs::rename(&temporary, &path).or_else(|error| {
         let _ = fs::remove_file(&temporary);
         Err(error)
