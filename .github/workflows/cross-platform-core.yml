@@ -22,6 +22,7 @@ jobs:
         with:
           swift-version: swift-5.9.2-release
           swift-build: 5.9.2-RELEASE
+          update-sdk-modules: true
       - name: Swift version
         run: swift --version
       - name: Test shared core
