@@ -16,9 +16,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: swift-actions/setup-swift@v3
-        with:
-          swift-version: "6.2"
+      - name: Swift version
+        run: swift --version
       - name: Test shared core
         working-directory: SharedCore
         run: swift test
