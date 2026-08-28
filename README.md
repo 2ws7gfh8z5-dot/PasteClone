@@ -140,6 +140,14 @@ MIT License - 详见 [LICENSE](./LICENSE)
 
 **PasteClone** - 让剪贴板管理变得优雅 ✨
 
+## v1.4.0 发布说明（2026-08-28）
+
+- **四平台发布**：提供 macOS Universal（Apple Silicon + Intel）、Windows 10/11 x86_64 和 Linux x86_64 安装包。
+- **Windows/Linux 文本客户端**：支持文本历史、搜索、置顶、删除、清理、一键粘贴、键盘导航和 `Ctrl+Shift+V` 全局呼出。
+- **原生平台验证**：Windows 与 Linux 安装包均由 GitHub Actions 对应系统 runner 测试和构建。
+- **平台边界**：macOS 是完整客户端；Windows/Linux 当前为纯文本 MVP，暂不支持图片、富文本、文件、Collections、粘贴队列、隐私规则、托盘和完整设置页。
+- **Linux 提示**：Wayland 下全局快捷键和输入注入受桌面环境及权限限制，X11 通常更稳定。
+
 ## v1.3.3 发布说明（2026-08-28）
 
 - **交互更顺滑**：面板和列表滚动采用贝塞尔曲线；遵循 macOS“减少动态效果”。
