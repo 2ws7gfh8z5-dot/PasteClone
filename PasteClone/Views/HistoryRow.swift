@@ -37,7 +37,8 @@ struct HistoryRow: View {
             }
             Spacer(minLength: 4)
             pasteActionButton
-            if hovering { hoverButtons }
+            // Keep the action rail in the layout even when idle so hover never shifts row content.
+            hoverButtons
         }
         .padding(.horizontal, 10).padding(.vertical, 7)
         .background(isSelected ? PCTheme.accentSoft.opacity(0.42) : PCTheme.card)
@@ -47,7 +48,6 @@ struct HistoryRow: View {
         .onTapGesture { onSelect() }
         .onHover { hovering = $0 }
         .animation(reduceMotion ? nil : PCTheme.bezier(duration: 0.22), value: hovering)
-        .onTapGesture(count: 2) { onPaste() }
         .contextMenu { contextMenu }
     }
 
@@ -100,12 +100,21 @@ struct HistoryRow: View {
     }
 
     @ViewBuilder var hoverButtons: some View {
-        Button { store.pushStack(item) } label: { Image(systemName: "arrow.forward.square") }
-            .buttonStyle(.plain).foregroundColor(PCTheme.accent)
-        Button { store.togglePin(item) } label: { Image(systemName: item.isPinned ? "pin.fill" : "pin") }
-            .buttonStyle(.plain).foregroundColor(item.isPinned ? PCTheme.accent : PCTheme.inkSoft)
-        Button { store.delete(item) } label: { Image(systemName: "trash") }
-            .buttonStyle(.plain).foregroundColor(.red)
+        HStack(spacing: 6) {
+            Button { store.pushStack(item) } label: { Image(systemName: "arrow.forward.square") }
+                .help("加入粘贴队列")
+            Button { store.togglePin(item) } label: { Image(systemName: item.isPinned ? "pin.fill" : "pin") }
+                .help(item.isPinned ? "取消固定" : "固定")
+            Button { store.delete(item) } label: { Image(systemName: "trash") }
+                .foregroundColor(.red)
+                .help("删除")
+        }
+        .buttonStyle(PCIconButtonStyle())
+        .foregroundColor(PCTheme.accent)
+        .frame(width: 88, alignment: .trailing)
+        .opacity(hovering ? 1 : 0)
+        .allowsHitTesting(hovering)
+        .accessibilityHidden(!hovering)
     }
 
     @ViewBuilder var contextMenu: some View {

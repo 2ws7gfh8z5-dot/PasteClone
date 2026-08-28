@@ -9,3 +9,7 @@ xcuserdata/
 *.swiftdoc
 *.swiftinterface
 *.swiftmodule
+
+# Swift Package Manager
+.swiftpm/
+**/.build/

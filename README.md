@@ -48,7 +48,7 @@
 1. 打开 PasteClone，应用会进入菜单栏
 2. 按 `⇧⌘V` 打开剪贴板历史
 3. 复制任意内容，自动记录到历史
-4. 点击历史项可直接粘贴到前台应用
+4. 点击历史项右侧的粘贴图标，将内容直接输入前台应用
 
 ---
 
@@ -128,8 +128,11 @@ MIT License - 详见 [LICENSE](./LICENSE)
 
 **PasteClone** - 让剪贴板管理变得优雅 ✨
 
-## v1.3.0 发布说明（2026-08-28）
-- macOS Universal：支持 Apple Silicon 与 Intel。
-- 面板弹出/收回和一键粘贴按钮交互加入贝塞尔曲线动效，并尊重 Reduce Motion。
-- Windows/Linux：当前未发布可用客户端；请勿将 macOS 安装包用于其他系统。
+## v1.3.1 发布说明（2026-08-28）
+- 交互稳定性：历史行操作区始终预留宽度，悬停按钮出现时内容不再横向跳动。
+- 操作反馈：固定、队列、删除按钮加入悬停与按压贝塞尔动效，并尊重 Reduce Motion。
+- 防误触：移除列表行单击选择与双击粘贴的手势竞争；使用右侧常驻粘贴按钮可一键输入目标应用。
+- macOS Universal：同一安装包支持 Apple Silicon 与 Intel，要求 macOS 14+。
+- 跨平台基础：新增平台无关历史策略 Swift Package，并在 macOS、Windows、Linux CI runner 上验证共享规则。
+- Windows/Linux：桌面客户端仍在开发，当前尚无可用安装包；请勿将 macOS 安装包用于其他系统。
 - 安装包：GitHub Releases 提供 `.dmg` 与 `.zip`。

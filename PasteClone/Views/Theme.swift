@@ -130,3 +130,24 @@ extension PCTheme {
         .timingCurve(0.16, 1.0, 0.3, 1.0, duration: duration)
     }
 }
+
+
+struct PCIconButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var hovering = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12, weight: .semibold))
+            .frame(width: 24, height: 24)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(hovering ? PCTheme.accentSoft.opacity(0.55) : .clear)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.88 : 1)
+            .onHover { hovering = $0 }
+            .animation(reduceMotion ? nil : PCTheme.bezier(duration: 0.16), value: hovering)
+            .animation(reduceMotion ? nil : PCTheme.bezier(duration: 0.12), value: configuration.isPressed)
+    }
+}
