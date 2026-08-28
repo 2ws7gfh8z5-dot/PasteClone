@@ -1,3 +1,12 @@
+## [1.4.0] - 2026-08-28
+
+### Windows / Linux 跨平台客户端
+- 新增 Rust + egui 桌面客户端，提供纯文本历史、搜索、固定、删除和清理。
+- 支持 `Ctrl+Shift+V` 全局呼出、键盘导航、快速粘贴和 Esc 隐藏。
+- 粘贴前先隐藏面板并恢复目标输入框焦点；Windows/Linux 使用标准 `Ctrl+V`。
+- GitHub Actions 新增 Windows x86_64 portable ZIP 与 Linux x86_64 tar.gz 构建和 Release 上传。
+- 明确标注 Wayland 全局热键/输入注入和非文本剪贴板仍受平台限制。
+
 # [1.3.3] - 2026-08-28
 
 ### UI 交互与跨平台推进

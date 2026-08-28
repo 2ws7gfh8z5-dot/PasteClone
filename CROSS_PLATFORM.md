@@ -1,44 +1,23 @@
-# PasteClone 跨平台状态与路线
+# 跨平台客户端
 
-## 当前可用
+PasteClone 现在包含一个 Rust + egui 客户端，目标是让 Windows 10/11 与主流 Linux 桌面保持一致的剪贴板体验。
 
-| 平台 | 状态 | 安装包 |
-| --- | --- | --- |
-| macOS Apple Silicon | 可用（macOS 14+） | DMG / ZIP |
-| macOS Intel | 可用（macOS 14+） | 同一 Universal DMG / ZIP |
-| Windows | 开发中，尚无可用客户端 | 暂无 |
-| Linux | 开发中，尚无可用客户端 | 暂无 |
+## 已实现的跨平台 MVP
 
-macOS 客户端依赖 AppKit、`NSPasteboard`、Carbon 全局快捷键、Accessibility 与 `CGEvent`，不能直接在 Windows/Linux 上编译运行。本项目不会把 macOS 安装包标成其他平台版本。
+- 纯文本剪贴板自动记录、SHA-256 去重与 JSON 持久化
+- 搜索、固定、删除、清除未固定记录
+- `Ctrl+Shift+V` 全局呼出并聚焦窗口
+- 每条记录的“粘贴”按钮：隐藏窗口、恢复此前编辑器焦点、写入剪贴板并模拟平台粘贴键
+- 键盘导航：`↑/↓` 选择、`Enter` 粘贴、`Esc` 隐藏、`Ctrl/⌘+F` 搜索、`Ctrl/⌘+P` 固定、`Ctrl/⌘+1…9` 快速粘贴、`Delete` 删除
+- Windows portable ZIP 与 Linux x86_64 tar.gz 由 GitHub Actions 构建
 
-## 已建立的全线推进基础
+## 平台边界
 
-- `SharedCore/`：不依赖 AppKit 的 Swift Package，用于承载去重、历史限制、固定项、搜索/排序、数据迁移等共享规则。
-- `.github/workflows/cross-platform-core.yml`：在 macOS、Ubuntu、Windows 三种 runner 上测试共享核心，防止后续重新引入平台耦合。
-- macOS 原生客户端保留现有成熟系统集成，不为跨平台重写已经工作的功能。
+macOS 原生 SwiftUI/AppKit 客户端仍提供最完整能力（图片、富文本、文件、菜单栏与权限设置）。Rust 客户端当前聚焦纯文本 MVP；Linux Wayland 的全局热键和输入注入可能受桌面环境与权限限制，遇到限制时请使用窗口内按钮。Windows/Linux 包只有在对应 GitHub Actions 构建成功后才视为可下载版本。
 
-## 后续平台外壳
+## 构建
 
-### Windows
-
-1. Windows Clipboard API：文本、HTML/RTF、图片、文件。
-2. `RegisterHotKey` 全局快捷键与前台窗口恢复。
-3. `SendInput` 粘贴注入；首次使用明确解释权限与隐私。
-4. Windows App SDK 界面、托盘图标、开机启动和 MSIX 安装包。
-
-### Linux
-
-1. 优先分别实现 Wayland 与 X11 剪贴板适配，不能假设二者行为相同。
-2. 桌面环境支持时注册 Global Shortcuts portal；X11 使用对应热键实现。
-3. Wayland 输入注入遵循桌面 portal/权限模型；不通过绕过安全边界实现。
-4. 提供 Flatpak；之后按需求补 AppImage/deb/rpm。
-
-## 完成标准
-
-平台只有在真实系统 runner 或设备完成以下流程后才能标记“支持”：复制监控、历史恢复、全局呼出、搜索选择、粘贴到原应用、重启持久化、权限失败提示、安装/卸载和自动更新检查。
-
-## v1.3.3 交互推进
-
-跨平台预览客户端已完成基础 UI 收尾并通过 Rust 检查与测试。当前可运行范围：纯文本剪贴板轮询、JSON 持久化、SHA-256 去重、搜索、固定、清除未固定记录、`Ctrl+Shift+V` 呼出和每行粘贴按钮。它是验证系统适配的预览版本，不是 macOS 完整功能的替代品。
-
-正式支持 Windows/Linux 前，仍需在真实 Windows、X11 与 Wayland 设备上完成全局热键、输入注入、权限失败提示、托盘驻留、安装/卸载和升级流程验证，并分别打包 MSIX/Flatpak。
+```bash
+cargo test --manifest-path CrossPlatformClient/Cargo.toml
+cargo build --release --manifest-path CrossPlatformClient/Cargo.toml
+```

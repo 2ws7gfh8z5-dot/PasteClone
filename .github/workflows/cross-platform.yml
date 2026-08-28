@@ -1,0 +1,55 @@
+name: Cross-platform clients
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Windows portable, os: windows-2022, target: x86_64-pc-windows-msvc, binary: pasteclone-desktop.exe, archive: PasteClone-Windows-x86_64.zip }
+          - { name: Linux portable, os: ubuntu-24.04, target: x86_64-unknown-linux-gnu, binary: pasteclone-desktop, archive: PasteClone-Linux-x86_64.tar.gz }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libxdo-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Test
+        working-directory: CrossPlatformClient
+        run: cargo test --target ${{ matrix.target }}
+      - name: Build
+        working-directory: CrossPlatformClient
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: CrossPlatformClient
+        run: Compress-Archive -Path target/${{ matrix.target }}/release/${{ matrix.binary }} -DestinationPath ../${{ matrix.archive }}
+      - name: Package Linux
+        if: runner.os == 'Linux'
+        working-directory: CrossPlatformClient
+        run: tar -czf ../${{ matrix.archive }} -C target/${{ matrix.target }}/release ${{ matrix.binary }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.archive }}
+      - name: Upload release asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.archive }}
+          generate_release_notes: true
