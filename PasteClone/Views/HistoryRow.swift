@@ -19,6 +19,7 @@ struct HistoryRow: View {
                 Text(item.displayText)
                     .font(.system(size: 13))
                     .lineLimit(2)
+                    .truncationMode(.tail)
                     .foregroundColor(PCTheme.ink)
                 HStack(spacing: 6) {
                     Text(item.typeLabel)
@@ -32,9 +33,13 @@ struct HistoryRow: View {
                     }
                     Spacer()
                     Text(item.timestamp, style: .relative)
-                        .font(.system(size: 10)).foregroundColor(PCTheme.inkSoft.opacity(0.6))
+                        .font(.system(size: 10))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .foregroundColor(PCTheme.inkSoft.opacity(0.6))
                 }
             }
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: 4)
             pasteActionButton
             // Keep the action rail in the layout even when idle so hover never shifts row content.

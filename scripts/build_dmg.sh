@@ -4,7 +4,7 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="$PROJECT_DIR/build"
 APP_NAME="PasteClone"
-VERSION="${VERSION:-1.3.1}"
+VERSION="${VERSION:-1.3.2}"
 DERIVE_DATA="$BUILD_DIR/DerivedData-$VERSION"
 DMG_PATH="$BUILD_DIR/PasteClone-$VERSION.dmg"
 ZIP_PATH="$BUILD_DIR/PasteClone-$VERSION.zip"

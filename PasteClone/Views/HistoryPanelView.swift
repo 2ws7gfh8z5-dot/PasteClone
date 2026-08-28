@@ -57,7 +57,11 @@ struct HistoryPanelView: View {
             command(press) { openSettings() }
         }
         .onKeyPress(characters: .decimalDigits) { press in
-            guard press.modifiers == .command, let number = Int(press.characters) else { return .ignored }
+            guard press.modifiers.contains(.command),
+                  !press.modifiers.contains(.shift),
+                  !press.modifiers.contains(.option),
+                  !press.modifiers.contains(.control),
+                  let number = Int(press.characters) else { return .ignored }
             select(number - 1)
             return .handled
         }
@@ -140,7 +144,10 @@ struct HistoryPanelView: View {
     }
 
     private func command(_ press: KeyPress, action: () -> Void) -> KeyPress.Result {
-        guard press.modifiers == .command else { return .ignored }
+        guard press.modifiers.contains(.command),
+              !press.modifiers.contains(.shift),
+              !press.modifiers.contains(.option),
+              !press.modifiers.contains(.control) else { return .ignored }
         action(); return .handled
     }
 
