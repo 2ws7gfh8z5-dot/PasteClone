@@ -1,5 +1,8 @@
 import AppKit
 import Foundation
+import os.log
+
+fileprivate let logger = Logger(subsystem: "com.you.PasteClone", category: "ActiveAppService")
 
 final class ActiveAppService {
     static let shared = ActiveAppService()
@@ -21,15 +24,23 @@ final class ActiveAppService {
     func captureTargetApp() {
         guard let app = NSWorkspace.shared.frontmostApplication,
               app.processIdentifier != ProcessInfo.processInfo.processIdentifier,
-              !(Self.ignoredBundleIDs.contains(app.bundleIdentifier ?? "")) else { return }
+              !(Self.ignoredBundleIDs.contains(app.bundleIdentifier ?? "")) else { 
+            logger.debug("captureTargetApp: 跳过 - 无有效前台应用或被忽略")
+            return 
+        }
         targetApp = app
-        NSLog("[PasteClone] captureTargetApp → %@ (%@)", app.localizedName ?? "?", app.bundleIdentifier ?? "?")
+        logger.debug("captureTargetApp → \(app.localizedName ?? "?", privacy: .public) (\(app.bundleIdentifier ?? "?", privacy: .public), PID: \(app.processIdentifier, privacy: .public))")
     }
 
     /// Restore the app that owned focus before the history panel appeared.
     @discardableResult
     func restoreTargetApp() -> Bool {
-        guard let app = targetApp, !app.isTerminated else { return false }
-        return app.activate(options: [.activateIgnoringOtherApps])
+        guard let app = targetApp, !app.isTerminated else { 
+            logger.debug("restoreTargetApp: 目标应用为空或已终止")
+            return false 
+        }
+        let result = app.activate(options: [.activateIgnoringOtherApps])
+        logger.debug("restoreTargetApp → \(app.localizedName ?? "?", privacy: .public) (\(app.bundleIdentifier ?? "?", privacy: .public)): \(result ? "成功" : "失败", privacy: .public)")
+        return result
     }
 }

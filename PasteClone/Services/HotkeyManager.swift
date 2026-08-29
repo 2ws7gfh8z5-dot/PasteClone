@@ -1,6 +1,9 @@
 import Foundation
 import Carbon.HIToolbox
 import AppKit
+import os.log
+
+fileprivate let logger = Logger(subsystem: "com.you.PasteClone", category: "HotkeyManager")
 
 /// Global hotkey via Carbon RegisterEventHotKey — the only API that works
 /// without Accessibility permission for a plain hotkey.
@@ -25,6 +28,7 @@ final class HotkeyManager {
                               EventParamType(typeEventHotKeyID), nil,
                               MemoryLayout<EventHotKeyID>.size, nil, &hkID)
             if hkID.id == 1 {
+                logger.debug("全局热键触发")
                 DispatchQueue.main.async { HotkeyManager.shared.onTrigger?() }
             }
             return noErr
