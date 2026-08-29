@@ -44,6 +44,7 @@ struct HistoryPanelView: View {
         .frame(width: 380, height: 480)
         .background(
             ZStack {
+                PCTokens.Color.panel(dark).opacity(0.92)
                 PCTokens.Color.glass(dark)
                 if !AccessibilitySettings.reduceTransparency {
                     Color.clear.background(.ultraThinMaterial).opacity(dark ? 0.65 : 0.55)
@@ -125,7 +126,7 @@ struct HistoryPanelView: View {
                     .symbolRenderingMode(.hierarchical)
                     .symbolEffect(.bounce, value: panelVisible)
                 
-                Text("PasteClone")
+                Text("Just Paste")
                     .font(PCTokens.Font.headingMedium)
                     .foregroundColor(PCTokens.Color.ink(dark))
             }
@@ -380,6 +381,7 @@ struct HistoryPanelView: View {
         .padding(.vertical, PCTokens.Spacing.space3)
         .background(
             ZStack {
+                PCTokens.Color.panel(dark).opacity(0.92)
                 PCTokens.Color.glass(dark)
                 if !AccessibilitySettings.reduceTransparency {
                     Color.clear.background(.ultraThinMaterial).opacity(dark ? 0.6 : 0.5)

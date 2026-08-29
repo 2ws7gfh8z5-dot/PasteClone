@@ -14,7 +14,7 @@ struct PasteCloneApp: App {
             Button("打开剪贴板 (⇧⌘V)") { appDelegate.togglePanel() }
             Button("偏好设置") { NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil) }
             Divider()
-            Button("退出 PasteClone") { NSApp.terminate(nil) }
+            Button("退出 Just Paste") { NSApp.terminate(nil) }
         } label: {
             Image("MenuBarIcon")
         }

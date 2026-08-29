@@ -35,8 +35,8 @@ enum PCTokens {
         static let inkLight      = SwiftUI.Color(red: 0.16, green: 0.14, blue: 0.12)
         static let inkSoftDark   = SwiftUI.Color(red: 0.72, green: 0.69, blue: 0.64)
         static let inkSoftLight  = SwiftUI.Color(red: 0.32, green: 0.30, blue: 0.27)
-        static let inkMutedDark  = SwiftUI.Color(red: 0.55, green: 0.52, blue: 0.48)
-        static let inkMutedLight = SwiftUI.Color(red: 0.45, green: 0.42, blue: 0.38)
+        static let inkMutedDark  = SwiftUI.Color(red: 0.66, green: 0.63, blue: 0.58)
+        static let inkMutedLight = SwiftUI.Color(red: 0.38, green: 0.36, blue: 0.32)
         
         // Accent — Terracotta / Clay
         static let accent        = SwiftUI.Color(red: 0.80, green: 0.41, blue: 0.20)

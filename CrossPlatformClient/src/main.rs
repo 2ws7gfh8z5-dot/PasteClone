@@ -6,15 +6,10 @@ use enigo::{
     Direction::{Click, Press, Release},
     Enigo, Key, Keyboard, Settings,
 };
-use global_hotkey::{
-    hotkey::{Code, HotKey, Modifiers},
-    GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState,
-};
 use history::{insert, Clip};
 use std::{
     fs, io,
     path::PathBuf,
-    sync::mpsc,
     thread,
     time::{Duration, Instant},
 };
@@ -22,37 +17,6 @@ use std::{
 const LIMIT: usize = 500;
 
 fn main() -> eframe::Result {
-    let (show_tx, show_rx) = mpsc::channel();
-    
-    // ponytail: GlobalHotKeyManager must fail open (no hotkey) not crash
-    // Upgrade path: use fallible manager API when available in future versions
-    let hotkey_manager = match GlobalHotKeyManager::new() {
-        Ok(mgr) => {
-            let hotkey = HotKey::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyV);
-            if mgr.register(hotkey).is_ok() {
-                Some((mgr, hotkey))
-            } else {
-                eprintln!("Warning: failed to register global hotkey Shift+Ctrl+V");
-                None
-            }
-        }
-        Err(e) => {
-            eprintln!("Warning: could not create global hotkey manager: {}", e);
-            None
-        }
-    };
-    
-    thread::spawn(move || {
-        if let Some((_manager, hotkey)) = hotkey_manager {
-            let receiver = GlobalHotKeyEvent::receiver();
-            while let Ok(event) = receiver.recv() {
-                if event.id == hotkey.id() && event.state == HotKeyState::Pressed {
-                    let _ = show_tx.send(());
-                }
-            }
-        }
-    });
-    
     let viewport = egui::ViewportBuilder::default()
         .with_title("PasteClone")
         .with_inner_size([430.0, 560.0])
@@ -63,7 +27,7 @@ fn main() -> eframe::Result {
             viewport,
             ..Default::default()
         },
-        Box::new(|cc| Ok(Box::new(App::new(cc, show_rx)))),
+        Box::new(|cc| Ok(Box::new(App::new(cc)))),
     )
 }
 
@@ -73,14 +37,13 @@ struct App {
     clipboard: Option<Clipboard>,
     last_text: String,
     last_poll: Instant,
-    show_rx: mpsc::Receiver<()>,
     status: String,
     selected: usize,
     visible: bool,
 }
 
 impl App {
-    fn new(cc: &eframe::CreationContext<'_>, show_rx: mpsc::Receiver<()>) -> Self {
+    fn new(cc: &eframe::CreationContext<'_>) -> Self {
         configure_style(&cc.egui_ctx);
         let (items, status) = match load() {
             Ok(items) => (items, String::new()),
@@ -92,7 +55,6 @@ impl App {
             clipboard: Clipboard::new().ok(),
             last_text: String::new(),
             last_poll: Instant::now(),
-            show_rx,
             status,
             selected: 0,
             visible: false, // Fixed: start hidden
@@ -177,16 +139,12 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Handle show request from hotkey
-        if self.show_rx.try_recv().is_ok() {
+        // Toggle visibility with Ctrl+Shift+V (handled via egui hotkey)
+        if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL | egui::Modifiers::SHIFT, EguiKey::V)) {
             self.visible = !self.visible;
         }
         
         if !self.visible {
-            // Handle keyboard shortcuts even when hidden
-            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, EguiKey::Escape)) {
-                self.visible = true;
-            }
             return;
         }
         
@@ -293,7 +251,7 @@ impl eframe::App for App {
             ui.horizontal(|ui| {
                 ui.label(
                     RichText::new(format!(
-                        "{} 条记录 · ↑↓选择 Enter粘贴 · Esc隐藏",
+                        "{} 条记录 · ↑↓选择 Enter粘贴 · Esc隐藏 · Ctrl+Shift+V切换",
                         self.items.len()
                     ))
                     .small()
