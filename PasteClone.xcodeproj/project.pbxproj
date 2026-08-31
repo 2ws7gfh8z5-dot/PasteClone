@@ -278,8 +278,8 @@
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = PasteClone/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.you.PasteClone;
-				PRODUCT_NAME = PasteClone;
+				PRODUCT_BUNDLE_IDENTIFIER = com.you.justpaste;
+				PRODUCT_NAME = "Just Paste";
 				SDKROOT = macosx;
 			};
 			name = Debug;
@@ -293,8 +293,8 @@
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = PasteClone/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.you.PasteClone;
-				PRODUCT_NAME = PasteClone;
+				PRODUCT_BUNDLE_IDENTIFIER = com.you.justpaste;
+				PRODUCT_NAME = "Just Paste";
 				SDKROOT = macosx;
 			};
 			name = Release;
