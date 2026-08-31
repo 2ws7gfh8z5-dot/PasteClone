@@ -40,7 +40,7 @@ targets:
         LSMinimumSystemVersion: "14.0"
         LSUIElement: true
         NSHumanReadableCopyright: "Copyright 2024. All rights reserved."
-        NSAppleEventsUsageDescription: "PasteClone 需要访问剪贴板以记录和回放内容。"
+        NSAppleEventsUsageDescription: "Just Paste 需要访问剪贴板以记录和回放内容。"
         NSPrincipalClass: NSApplication
         LSApplicationCategoryType: public.app-category.utilities
     entitlements:

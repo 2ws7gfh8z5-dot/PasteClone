@@ -1,8 +1,8 @@
 [package]
 name = "pasteclone-desktop"
-version = "1.5.1"
+version = "1.7.0"
 edition = "2021"
-description = "PasteClone experimental Windows and Linux desktop client"
+description = "Just Paste Windows and Linux desktop client"
 license = "MIT"
 
 [dependencies]

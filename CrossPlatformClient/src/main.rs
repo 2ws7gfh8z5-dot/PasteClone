@@ -18,11 +18,11 @@ const LIMIT: usize = 500;
 
 fn main() -> eframe::Result {
     let viewport = egui::ViewportBuilder::default()
-        .with_title("PasteClone")
+        .with_title("Just Paste")
         .with_inner_size([430.0, 560.0])
         .with_min_inner_size([360.0, 420.0]);
     eframe::run_native(
-        "PasteClone",
+        "Just Paste",
         eframe::NativeOptions {
             viewport,
             ..Default::default()

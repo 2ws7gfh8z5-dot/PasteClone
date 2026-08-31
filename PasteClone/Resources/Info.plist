@@ -27,7 +27,7 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>PasteClone 需要访问剪贴板以记录和回放内容。</string>
+	<string>Just Paste 需要访问剪贴板以记录和回放内容。</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright 2024. All rights reserved.</string>
 	<key>NSPrincipalClass</key>

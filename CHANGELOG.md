@@ -180,3 +180,4 @@
 - 面板加入全屏辅助空间并提升到 status bar 层级，全屏应用中仍保持可见。
 - 点击历史记录正文即可恢复原应用并粘贴到原输入框；保留右侧粘贴按钮与 Enter 快捷键。
 - macOS Universal、Windows x86_64、Linux x86_64 安装包同步发布。
+- Windows/Linux 客户端标题与包版本同步为 Just Paste 1.7.0。
