@@ -16,3 +16,6 @@ xcuserdata/
 
 # Rust build artifacts
 **/target/
+
+# Local HTTPS development certificate and private key
+website/.certs/

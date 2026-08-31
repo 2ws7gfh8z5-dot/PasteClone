@@ -71,7 +71,10 @@ struct HistoryRow: View {
         )
         .shadow(isHoveringOrSelected ? PCTokens.Shadow.level2 : PCTokens.Shadow.level1)
         .contentShape(Rectangle())
-        .onTapGesture { onSelect() }
+        .onTapGesture {
+            onSelect()
+            onPaste()
+        }
         .onHover { hovering = $0 }
         .focusable()
         .focused($isFocused)

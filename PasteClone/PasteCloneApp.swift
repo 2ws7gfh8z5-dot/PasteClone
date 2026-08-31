@@ -69,7 +69,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        window.level = .floating
+        // statusBar keeps the panel above full-screen app content while the auxiliary
+        // collection behavior lets it join the active full-screen Space.
+        window.level = .statusBar
         window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary, .ignoresCycle]
         window.isOpaque = false
         window.backgroundColor = .clear
@@ -89,13 +91,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isPanelPresented = true
         
         // Position at mouse or screen center
-        if let screen = NSScreen.main {
+        if let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }) ?? NSScreen.main {
             let mouseLocation = NSEvent.mouseLocation
             let windowFrame = window.frame
+            let visibleFrame = screen.visibleFrame
             let x = mouseLocation.x - windowFrame.width / 2
             let y = mouseLocation.y - windowFrame.height / 2
-            window.setFrameOrigin(NSPoint(x: max(0, min(x, screen.frame.width - windowFrame.width)),
-                                         y: max(0, min(y, screen.frame.height - windowFrame.height))))
+            window.setFrameOrigin(NSPoint(x: max(visibleFrame.minX, min(x, visibleFrame.maxX - windowFrame.width)),
+                                         y: max(visibleFrame.minY, min(y, visibleFrame.maxY - windowFrame.height))))
         }
         
         window.makeKeyAndOrderFront(nil)
@@ -109,12 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func hidePanel(_ window: NSWindow) {
         guard isPanelPresented else { return }
-        
-        // The SwiftUI view will animate out, then we hide the window
-        if let container = panelHostingView?.rootView as? PanelContainer {
-            // We need to communicate with the SwiftUI view to trigger exit animation
-            // This is handled by the onDismiss callback which calls hidePanelImmediate
-        }
+        hidePanelImmediate()
     }
     
     private func hidePanelImmediate() {
