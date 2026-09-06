@@ -86,22 +86,22 @@ struct HistoryPanelView: View {
         .onKeyPress(.return) { pasteSelected(); return .handled }
         .onKeyPress(.escape) { closeWithAnimation(); return .handled }
         .onKeyPress(characters: CharacterSet(charactersIn: "c"), phases: .down) { press in
-            command(press) { if let item = selectedItem { store.copy(item) } }
+            return command(press) { if let item = selectedItem { store.copy(item) } }
         }
         .onKeyPress(characters: CharacterSet(charactersIn: "v"), phases: .down) { press in
-            command(press) { pasteSelected() }
+            return command(press) { pasteSelected() }
         }
         .onKeyPress(characters: CharacterSet(charactersIn: "f"), phases: .down) { press in
-            command(press) { searchFocused = true }
+            return command(press) { searchFocused = true }
         }
         .onKeyPress(characters: CharacterSet(charactersIn: "p"), phases: .down) { press in
-            command(press) { if let item = selectedItem { store.togglePin(item) } }
+            return command(press) { if let item = selectedItem { store.togglePin(item) } }
         }
         .onKeyPress(.delete, phases: .down) { press in
-            command(press) { if let item = selectedItem { store.delete(item) } }
+            return command(press) { if let item = selectedItem { store.delete(item) } }
         }
         .onKeyPress(characters: CharacterSet(charactersIn: ","), phases: .down) { press in
-            command(press) { openSettings() }
+            return command(press) { openSettings() }
         }
         .onKeyPress(characters: .decimalDigits) { press in
             guard press.modifiers.contains(.command),
@@ -438,7 +438,8 @@ struct HistoryPanelView: View {
         let restored = ActiveAppService.shared.restoreTargetApp()
         logger.debug("恢复目标应用: \(restored ? "成功" : "失败(应用可能已终止)", privacy: .public)")
         store.paste(item, synthesizeKeypress: false)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+        // 使用更短的延迟，避免重复触发
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             logger.debug("延迟后发送 ⌘V")
             ClipboardStore.synthesizePaste()
         }

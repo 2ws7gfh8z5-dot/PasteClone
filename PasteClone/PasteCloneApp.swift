@@ -137,7 +137,7 @@ struct PanelContainer: View {
     
     var body: some View {
         ZStack {
-            // Background dim - subtle
+            // Background dim
             Color.black.opacity(isVisible ? 0.15 : 0)
                 .ignoresSafeArea()
                 .animation(reduceMotion ? .linear(duration: 0.001) : PCTokens.Motion.easeOutExpo(reduceMotion: false), value: isVisible)
@@ -149,7 +149,6 @@ struct PanelContainer: View {
                 .gesture(
                     DragGesture()
                         .onChanged { value in
-                            // Allow slight drag to dismiss
                             if value.translation.height > 20 {
                                 dragOffset = CGSize(width: 0, height: value.translation.height)
                             }

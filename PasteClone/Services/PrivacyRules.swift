@@ -1,7 +1,10 @@
 import AppKit
 
 /// User-managed capture exclusions. Bundle identifiers are stable across app updates.
-enum PrivacyRules {
+class PrivacyRules {
+    /// Bundle identifier of the PasteClone app — used to exclude self from clipboard monitoring
+    static let ownBundleID = "com.you.justpaste"
+    
     static let defaultsKey = "excludedBundleIDs"
 
     static var excludedBundleIDs: Set<String> {
@@ -11,6 +14,8 @@ enum PrivacyRules {
 
     static func excludes(bundleIdentifier: String?) -> Bool {
         guard let bundleIdentifier else { return false }
+        // Always exclude self
+        if bundleIdentifier == ownBundleID { return true }
         return excludedBundleIDs.contains(bundleIdentifier)
     }
 

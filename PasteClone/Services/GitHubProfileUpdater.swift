@@ -6,7 +6,7 @@ class GitHubProfileUpdater {
     static func suggestPublishEmail() {
         let alert = NSAlert()
         alert.messageText = "分享您的邮箱"
-        alert.informativeText = "为了方便用户通过邮箱与您联系，建议在 GitHub 个人资料中公开您的邮箱：15665874885@163.com"
+        alert.informativeText = "为了方便用户通过邮箱与您联系，建议在 GitHub 个人资料中公开您的邮箱"
         alert.addButton(withTitle: "打开 GitHub 设置")
         alert.addButton(withTitle: "取消")
         
