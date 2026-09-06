@@ -181,3 +181,10 @@
 - 点击历史记录正文即可恢复原应用并粘贴到原输入框；保留右侧粘贴按钮与 Enter 快捷键。
 - macOS Universal、Windows x86_64、Linux x86_64 安装包同步发布。
 - Windows/Linux 客户端标题与包版本同步为 Just Paste 1.7.0。
+## [1.7.2] - 2026-09-06
+
+### Icon system refresh
+
+- Replaced the legacy hand-drawn clipboard with a high-contrast document-history icon.
+- Added a macOS template menu-bar icon that adapts to light and dark menu bars.
+- Updated macOS AppIcon appearances and the Windows/Linux native window icon from one shared source asset.

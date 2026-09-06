@@ -3,12 +3,13 @@ set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="$PROJECT_DIR/build"
-APP_NAME="PasteClone"
-VERSION="${VERSION:-1.4.0}"
+DIST_DIR="$PROJECT_DIR/dist"
+APP_NAME="Just Paste"
+VERSION="${VERSION:-1.7.2}"
 DERIVE_DATA="$BUILD_DIR/DerivedData-$VERSION"
-DMG_PATH="$BUILD_DIR/PasteClone-$VERSION.dmg"
-ZIP_PATH="$BUILD_DIR/PasteClone-$VERSION.zip"
-TEMP_DMG="$(mktemp -u /tmp/PasteClone-temp.XXXXXX).dmg"
+DMG_PATH="$DIST_DIR/JustPaste-$VERSION-macos-universal.dmg"
+ZIP_PATH="$DIST_DIR/JustPaste-$VERSION-macos-universal.zip"
+TEMP_DMG="$(mktemp -u /tmp/JustPaste-temp.XXXXXX).dmg"
 trap 'rm -f "$TEMP_DMG"' EXIT
 
 xcodebuild -project "$PROJECT_DIR/PasteClone.xcodeproj" -scheme PasteClone -configuration Release -sdk macosx \
@@ -16,7 +17,7 @@ xcodebuild -project "$PROJECT_DIR/PasteClone.xcodeproj" -scheme PasteClone -conf
   CODE_SIGNING_ALLOWED=NO ONLY_ACTIVE_ARCH=NO >/dev/null
 APP_PATH="$DERIVE_DATA/Build/Products/Release/$APP_NAME.app"
 test -d "$APP_PATH"
-mkdir -p "$BUILD_DIR"
+mkdir -p "$DIST_DIR"
 rm -f "$DMG_PATH" "$ZIP_PATH"
 hdiutil create -srcfolder "$APP_PATH" -volname "$APP_NAME" -fs HFS+ -format UDRW -o "$TEMP_DMG" >/dev/null
 hdiutil convert "$TEMP_DMG" -format UDZO -o "$DMG_PATH" >/dev/null

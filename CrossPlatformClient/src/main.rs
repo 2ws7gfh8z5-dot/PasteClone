@@ -20,7 +20,11 @@ fn main() -> eframe::Result {
     let viewport = egui::ViewportBuilder::default()
         .with_title("Just Paste")
         .with_inner_size([430.0, 560.0])
-        .with_min_inner_size([360.0, 420.0]);
+        .with_min_inner_size([360.0, 420.0])
+        .with_icon(
+            eframe::icon_data::from_png_bytes(include_bytes!("../assets/just-paste-icon.png"))
+                .expect("bundled Just Paste icon must be valid PNG"),
+        );
     eframe::run_native(
         "Just Paste",
         eframe::NativeOptions {

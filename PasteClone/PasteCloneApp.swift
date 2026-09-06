@@ -17,6 +17,7 @@ struct PasteCloneApp: App {
             Button("退出 Just Paste") { NSApp.terminate(nil) }
         } label: {
             Image("MenuBarIcon")
+                .renderingMode(.template)
         }
         .menuBarExtraStyle(.menu)
     }
