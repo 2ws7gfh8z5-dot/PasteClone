@@ -11,7 +11,9 @@ class GitHubProfileUpdater {
         alert.addButton(withTitle: "取消")
         
         if alert.runModal() == .alertFirstButtonReturn {
-            NSWorkspace.shared.open(URL(string: "https://github.com/settings/profile")!)
+            if let url = URL(string: "https://github.com/settings/profile") {
+                NSWorkspace.shared.open(url)
+            }
         }
     }
 }

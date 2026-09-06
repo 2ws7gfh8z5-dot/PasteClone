@@ -455,7 +455,9 @@ struct PreferencesView: View {
                         )
                     
                     Button(action: {
-                        NSWorkspace.shared.open(URL(string: donationURL) ?? URL(string: "https://github.com/2ws7gfh8z5-dot/PasteClone")!)
+                        if let url = URL(string: donationURL) {
+                            NSWorkspace.shared.open(url)
+                        }
                     }) {
                         Label("打开", systemImage: "arrow.up.right")
                             .font(PCTokens.Font.labelMedium)
@@ -696,7 +698,11 @@ private struct LinkButton: View {
     @State private var hover = false
     
     var body: some View {
-        Button(action: { NSWorkspace.shared.open(URL(string: url)!) }) {
+        Button(action: {
+            if let url = URL(string: url) {
+                NSWorkspace.shared.open(url)
+            }
+        }) {
             Text(title)
                 .font(PCTokens.Font.labelMedium)
                 .foregroundColor(hover ? PCTokens.Color.accent : PCTokens.Color.inkSoft(dark))
