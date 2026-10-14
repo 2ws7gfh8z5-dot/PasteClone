@@ -6,17 +6,41 @@ use enigo::{
     Direction::{Click, Press, Release},
     Enigo, Key, Keyboard, Settings,
 };
+use global_hotkey::{
+    hotkey::{Code, HotKey, Modifiers},
+    GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState,
+};
 use history::{insert, Clip};
 use std::{
     fs, io,
     path::PathBuf,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
     thread,
     time::{Duration, Instant},
 };
 
 const LIMIT: usize = 500;
 
+const CJK_FONT_PATHS: [&str; 7] = [
+    "/System/Library/Fonts/PingFang.ttc",
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+    r"C:\Windows\Fonts\msyh.ttc",
+    r"C:\Windows\Fonts\simhei.ttf",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+];
+
 fn main() -> eframe::Result {
+    let hotkey_manager = GlobalHotKeyManager::new().ok();
+    let hotkey_registered = hotkey_manager.as_ref().is_some_and(|manager| {
+        manager
+            .register(HotKey::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::KeyV))
+            .is_ok()
+    });
     let viewport = egui::ViewportBuilder::default()
         .with_title("Just Paste")
         .with_inner_size([430.0, 560.0])
@@ -31,7 +55,7 @@ fn main() -> eframe::Result {
             viewport,
             ..Default::default()
         },
-        Box::new(|cc| Ok(Box::new(App::new(cc)))),
+        Box::new(move |cc| Ok(Box::new(App::new(cc, hotkey_registered)))),
     )
 }
 
@@ -44,15 +68,39 @@ struct App {
     status: String,
     selected: usize,
     visible: bool,
+    show: Arc<AtomicBool>,
+    persist: bool,
 }
 
 impl App {
-    fn new(cc: &eframe::CreationContext<'_>) -> Self {
+    fn new(cc: &eframe::CreationContext<'_>, hotkey_registered: bool) -> Self {
         configure_style(&cc.egui_ctx);
-        let (items, status) = match load() {
-            Ok(items) => (items, String::new()),
-            Err(error) => (Vec::new(), format!("历史记录读取失败：{error}")),
+        install_cjk_font(&cc.egui_ctx);
+        let (items, persist, mut status) = match load() {
+            Ok(items) => (items, true, String::new()),
+            Err(error) => (Vec::new(), false, format!("历史记录读取失败：{error}")),
         };
+        if !hotkey_registered {
+            let message = "全局热键不可用";
+            status = if status.is_empty() {
+                message.into()
+            } else {
+                format!("{message}；{status}")
+            };
+        }
+        let show = Arc::new(AtomicBool::new(false));
+        {
+            let show = show.clone();
+            let ctx = cc.egui_ctx.clone();
+            thread::spawn(move || {
+                while let Ok(event) = GlobalHotKeyEvent::receiver().recv() {
+                    if event.state == HotKeyState::Pressed {
+                        show.store(true, Ordering::SeqCst);
+                        ctx.request_repaint();
+                    }
+                }
+            });
+        }
         Self {
             items,
             query: String::new(),
@@ -61,7 +109,9 @@ impl App {
             last_poll: Instant::now(),
             status,
             selected: 0,
-            visible: false, // Fixed: start hidden
+            visible: true,
+            show,
+            persist,
         }
     }
     fn visible_indices(&self) -> Vec<usize> {
@@ -83,9 +133,7 @@ impl App {
                 if text != self.last_text {
                     self.last_text = text.clone();
                     insert(&mut self.items, text, LIMIT);
-                    if let Err(error) = save(&self.items) {
-                        self.status = format!("历史记录保存失败：{error}");
-                    }
+                    self.save();
                 }
             }
         }
@@ -135,6 +183,10 @@ impl App {
         }
     }
     fn save(&mut self) {
+        if !self.persist {
+            self.status = "历史记录读取失败，已阻止写入以保护原文件".into();
+            return;
+        }
         if let Err(error) = save(&self.items) {
             self.status = format!("保存失败：{error}");
         }
@@ -143,49 +195,50 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Toggle visibility with Ctrl+Shift+V (handled via egui hotkey)
-        if ctx.input_mut(|i| i.consume_key(egui::Modifiers::CTRL | egui::Modifiers::SHIFT, EguiKey::V)) {
-            self.visible = !self.visible;
+        ctx.request_repaint_after(Duration::from_millis(350));
+        self.poll_clipboard();
+        if self.show.swap(false, Ordering::SeqCst) {
+            self.visible = true;
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+            ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
         }
-        
+
         if !self.visible {
             return;
         }
-        
-        // Always poll clipboard when visible
-        self.poll_clipboard();
-        
+
+        // Keys are read outside any nested input lock: paste() and Visible(false) take the context lock.
+        let indices = self.visible_indices();
+        let (up, down, enter, escape) = ctx.input_mut(|i| {
+            (
+                i.consume_key(egui::Modifiers::NONE, EguiKey::ArrowUp),
+                i.consume_key(egui::Modifiers::NONE, EguiKey::ArrowDown),
+                i.consume_key(egui::Modifiers::NONE, EguiKey::Enter),
+                i.consume_key(egui::Modifiers::NONE, EguiKey::Escape),
+            )
+        });
+        if !indices.is_empty() {
+            if up {
+                self.selected = self.selected.saturating_sub(1).min(indices.len() - 1);
+            }
+            if down {
+                self.selected = (self.selected + 1).min(indices.len() - 1);
+            }
+            if enter {
+                if let Some(idx) = indices.get(self.selected) {
+                    self.paste(*idx, ctx);
+                }
+            }
+        }
+        if escape {
+            self.visible = false;
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+        }
+
         egui::CentralPanel::default().show(ctx, |ui| {
-            // Keyboard navigation
-            ui.input_mut(|i| {
-                let visible = self.visible_indices();
-                if visible.is_empty() {
-                    return;
-                }
-                
-                // Up arrow
-                if i.consume_key(egui::Modifiers::NONE, EguiKey::ArrowUp) {
-                    self.selected = self.selected.saturating_sub(1).min(visible.len() - 1);
-                }
-                // Down arrow
-                if i.consume_key(egui::Modifiers::NONE, EguiKey::ArrowDown) {
-                    self.selected = (self.selected + 1).min(visible.len() - 1);
-                }
-                // Enter to paste
-                if i.consume_key(egui::Modifiers::NONE, EguiKey::Enter) {
-                    if let Some(idx) = visible.get(self.selected) {
-                        self.paste(*idx, ctx);
-                    }
-                }
-                // Escape to hide
-                if i.consume_key(egui::Modifiers::NONE, EguiKey::Escape) {
-                    self.visible = false;
-                }
-            });
-            
             ui.heading("剪贴板历史");
             ui.separator();
-            
+
             // Search box
             ui.horizontal(|ui| {
                 ui.text_edit_singleline(&mut self.query);
@@ -194,7 +247,7 @@ impl eframe::App for App {
                 }
             });
             ui.separator();
-            
+
             // List items
             let visible = self.visible_indices();
             if visible.is_empty() {
@@ -208,54 +261,61 @@ impl eframe::App for App {
                     );
                 });
             } else {
-                for (vis_idx, &orig_idx) in visible.iter().enumerate() {
-                    let is_selected = vis_idx == self.selected;
-                    ui.horizontal(|ui| {
-                        if is_selected {
-                            ui.visuals_mut().selection.bg_fill = Color32::from_rgb(204, 105, 51);
-                        }
-                        
-                        // Pinned icon
-                        if self.items[orig_idx].pinned {
-                            ui.label(
-                                RichText::new("📌")
-                                    .size(16.0),
-                            );
-                        }
-                        
-                        // Text content (truncated)
-                        let text = &self.items[orig_idx].text;
-                        let display_text = if text.len() > 50 {
-                            format!("{}...", &text[..50])
-                        } else {
-                            text.clone()
-                        };
-                        ui.label(RichText::new(display_text).small());
-                        
-                        // Paste button
-                        if ui.small_button("粘贴").clicked() {
-                            self.paste(orig_idx, ctx);
-                        }
-                        
-                        // Pin/Unpin button
-                        if ui.small_button(if self.items[orig_idx].pinned { "取消" } else { "固定" }).clicked() {
-                            self.items[orig_idx].pinned = !self.items[orig_idx].pinned;
-                            self.save();
-                        }
-                        
-                        // Delete button
-                        if ui.small_button("删除").clicked() {
-                            self.delete(orig_idx);
+                let mut pending_delete = None;
+                egui::ScrollArea::vertical()
+                    .auto_shrink([false, false])
+                    .show(ui, |ui| {
+                        for (vis_idx, &orig_idx) in visible.iter().enumerate() {
+                            let is_selected = vis_idx == self.selected;
+                            egui::Frame::new()
+                                .fill(if is_selected {
+                                    Color32::from_rgb(238, 194, 151)
+                                } else {
+                                    Color32::TRANSPARENT
+                                })
+                                .corner_radius(CornerRadius::same(6))
+                                .show(ui, |ui| {
+                                    ui.horizontal(|ui| {
+                                        // Pinned icon
+                                        if self.items[orig_idx].pinned {
+                                            ui.label(
+                                                RichText::new("📌")
+                                                    .size(16.0),
+                                            );
+                                        }
+
+                                        // Text content (truncated)
+                                        ui.label(RichText::new(preview(&self.items[orig_idx].text)).small());
+
+                                        // Paste button
+                                        if ui.small_button("粘贴").clicked() {
+                                            self.paste(orig_idx, ctx);
+                                        }
+
+                                        // Pin/Unpin button
+                                        if ui.small_button(if self.items[orig_idx].pinned { "取消" } else { "固定" }).clicked() {
+                                            self.items[orig_idx].pinned = !self.items[orig_idx].pinned;
+                                            self.save();
+                                        }
+
+                                        // Delete button
+                                        if ui.small_button("删除").clicked() {
+                                            pending_delete = Some(orig_idx);
+                                        }
+                                    });
+                                });
                         }
                     });
+                if let Some(index) = pending_delete {
+                    self.delete(index);
                 }
             }
-            
+
             ui.separator();
             ui.horizontal(|ui| {
                 ui.label(
                     RichText::new(format!(
-                        "{} 条记录 · ↑↓选择 Enter粘贴 · Esc隐藏 · Ctrl+Shift+V切换",
+                        "{} 条记录 · ↑↓选择 Enter粘贴 · Esc隐藏 · Ctrl+Shift+V呼出",
                         self.items.len()
                     ))
                     .small()
@@ -281,6 +341,29 @@ impl eframe::App for App {
     }
 }
 
+fn preview(text: &str) -> String {
+    if text.chars().count() > 50 {
+        let head: String = text.chars().take(50).collect();
+        format!("{head}...")
+    } else {
+        text.to_string()
+    }
+}
+
+fn install_cjk_font(ctx: &egui::Context) {
+    let Some(data) = CJK_FONT_PATHS.iter().find_map(|path| fs::read(path).ok()) else {
+        return;
+    };
+    let mut fonts = egui::FontDefinitions::default();
+    fonts
+        .font_data
+        .insert("cjk".to_owned(), Arc::new(egui::FontData::from_owned(data)));
+    for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
+        fonts.families.entry(family).or_default().push("cjk".to_owned());
+    }
+    ctx.set_fonts(fonts);
+}
+
 fn configure_style(ctx: &egui::Context) {
     let mut style = (*ctx.style()).clone();
     style.spacing.item_spacing = Vec2::new(8.0, 8.0);
@@ -288,13 +371,14 @@ fn configure_style(ctx: &egui::Context) {
     style.visuals.widgets.hovered.corner_radius = CornerRadius::same(8);
     style.visuals.widgets.hovered.bg_fill = Color32::from_rgb(238, 194, 151);
     style.visuals.selection.bg_fill = Color32::from_rgb(204, 105, 51);
+    style.scroll_animation = egui::style::ScrollAnimation::none();
     ctx.set_style(style);
 }
 
 fn data_path() -> PathBuf {
     dirs::data_local_dir()
         .unwrap_or_else(std::env::temp_dir)
-        .join("PasteClone")
+        .join("JustPasteDesktop")
         .join("history.json")
 }
 
@@ -323,4 +407,15 @@ fn save(items: &[Clip]) -> io::Result<()> {
         let _ = fs::remove_file(&temporary);
         Err(error)
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::preview;
+
+    #[test]
+    fn preview_truncates_cjk_by_chars_without_panicking() {
+        let text = "中".repeat(60);
+        assert_eq!(preview(&text), format!("{}...", "中".repeat(50)));
+    }
 }

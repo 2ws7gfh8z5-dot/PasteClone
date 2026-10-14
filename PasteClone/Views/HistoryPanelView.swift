@@ -6,19 +6,23 @@ fileprivate let logger = Logger(subsystem: "com.you.PasteClone", category: "Hist
 
 struct HistoryPanelView: View {
     @ObservedObject var store: ClipboardStore
+    /// Owned by PanelContainer (single source of truth for panel presentation).
+    let panelVisible: Bool
     var onHide: () -> Void
-    
+
     @State private var selectedID: ClipboardItem.ID?
     @FocusState private var panelFocused: Bool
     @FocusState private var searchFocused: Bool
     @AppStorage(PCTheme.modeKey) private var appearanceMode = PCTheme.Mode.automatic.rawValue
-    @State private var clock = Date()
-    @State private var panelVisible = false
     @State private var searchTextLocal = ""
     @State private var showPasteQueueHint = false
-    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     private var dark: Bool { PCTheme.isDark() }
     private var visibleItems: [ClipboardItem] { store.filteredItems }
+    private var hoverAnimation: Animation {
+        PCTokens.Motion.resolve(PCTokens.Motion.hover, reduced: reduceMotion)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -30,15 +34,13 @@ struct HistoryPanelView: View {
             Divider()
                 .background(PCTokens.Color.divider(dark))
                 .padding(.horizontal, PCTokens.Spacing.space4)
-                .opacity(panelVisible ? 1 : 0)
-                .animation(PCTokens.Motion.easeOutExpo(reduceMotion: AccessibilitySettings.reduceMotion).delay(0.08), value: panelVisible)
-            
+
             if visibleItems.isEmpty {
                 emptyState
             } else {
                 historyList
             }
-            
+
             footer
         }
         .frame(width: 380, height: 480)
@@ -57,27 +59,16 @@ struct HistoryPanelView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: PCTokens.Radius.r6, style: .continuous))
         .shadow(PCTokens.Shadow.level3)
-        .scaleEffect(panelVisible ? 1 : 0.94)
+        // Enter/exit opacity and scale (plan 2.3 P1). Scale is dropped under Reduce Motion (opacity-only).
+        .scaleEffect(panelVisible || reduceMotion ? 1 : 0.96)
         .opacity(panelVisible ? 1 : 0)
-        .offset(y: panelVisible ? 0 : 8)
-        .animation(
-            AccessibilitySettings.reduceMotion
-                ? .linear(duration: 0.001)
-                : PCTokens.Motion.springGentle(reduceMotion: false),
-            value: panelVisible
-        )
         .preferredColorScheme(dark ? .dark : .light)
         .focusable()
         .focused($panelFocused)
         .onAppear {
             selectFirst()
             panelFocused = true
-            withAnimation(PCTokens.Motion.springGentle(reduceMotion: AccessibilitySettings.reduceMotion).delay(0.04)) {
-                panelVisible = true
-            }
         }
-        .onDisappear { panelVisible = false }
-        .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { clock = $0 }
         .onChange(of: store.filteredItems.map(\.id)) { _, _ in normalizeSelection() }
         .onChange(of: store.searchText) { _, new in searchTextLocal = new }
         // Keyboard shortcuts
@@ -124,20 +115,19 @@ struct HistoryPanelView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(PCTokens.Color.accent)
                     .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.bounce, value: panelVisible)
-                
+
                 Text("Just Paste")
                     .font(PCTokens.Font.headingMedium)
                     .foregroundColor(PCTokens.Color.ink(dark))
             }
-            
+
             // Search Field
             HStack(spacing: PCTokens.Spacing.space2) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(searchFocused ? PCTokens.Color.accent : PCTokens.Color.inkMuted(dark))
-                    .animation(PCTokens.Motion.springSwift(reduceMotion: AccessibilitySettings.reduceMotion), value: searchFocused)
-                
+                    .animation(hoverAnimation, value: searchFocused)
+
                 TextField("搜索剪贴板…", text: Binding(
                     get: { store.searchText },
                     set: { store.searchText = $0; searchTextLocal = $0 }
@@ -156,32 +146,21 @@ struct HistoryPanelView: View {
                         )
                         .shadow(searchFocused ? PCTokens.Shadow.glow : PCTokens.Shadow.level1)
                 )
-                .animation(PCTokens.Motion.springSwift(reduceMotion: AccessibilitySettings.reduceMotion), value: searchFocused)
+                .animation(hoverAnimation, value: searchFocused)
                 .onSubmit { pasteSelected() }
                 .frame(maxWidth: .infinity)
             }
-            
+
             // Close Button
             Button(action: closeWithAnimation) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 16, weight: .medium))
                     .foregroundColor(PCTokens.Color.inkMuted(dark))
-                    .rotationEffect(.degrees(panelVisible ? 90 : 0))
-                    .scaleEffect(panelVisible ? 1.0 : 0.8)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(PCButtonStyle())
             .frame(width: 28, height: 28)
             .contentShape(RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous))
-            .background(
-                RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous)
-                    .fill(PCTokens.Color.inkMuted(dark).opacity(0.12))
-                    .opacity(0)
-            )
-            .onHover { hovering in
-                // hover feedback via background opacity
-            }
             .help("关闭面板 (Esc)")
-            .animation(PCTokens.Motion.springSwift(reduceMotion: AccessibilitySettings.reduceMotion), value: panelVisible)
         }
     }
     
@@ -191,35 +170,27 @@ struct HistoryPanelView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: PCTokens.Spacing.space2) {
-                    ForEach(Array(visibleItems.enumerated()), id: \.element.id) { index, item in
+                    ForEach(visibleItems, id: \.id) { item in
                         HistoryRow(
                             store: store,
                             item: item,
                             isSelected: selectedItem?.id == item.id,
                             onSelect: { selectedID = item.id },
-                            onPaste: { paste(item) },
-                            index: index,
-                            totalCount: visibleItems.count
+                            onPaste: { paste(item) }
                         )
                         .id(item.id)
-                        .transition(
-                            .asymmetric(
-                                insertion: .scale(scale: 0.92).combined(with: .opacity).combined(with: .offset(y: -8)),
-                                removal: .scale(scale: 0.92).combined(with: .opacity).combined(with: .offset(x: 30))
-                            )
-                        )
+                        // Insert/remove is opacity-only (plan 2.3 P1); reduce motion keeps the same fade.
+                        .transition(.opacity)
                     }
                 }
                 .padding(.horizontal, PCTokens.Spacing.space3)
                 .padding(.vertical, PCTokens.Spacing.space3)
-                .animation(PCTokens.Motion.springSmooth(reduceMotion: AccessibilitySettings.reduceMotion), value: visibleItems.count)
+                .animation(PCTokens.Motion.resolve(PCTokens.Motion.reorder, reduced: reduceMotion), value: visibleItems.map(\.id))
             }
             .onChange(of: selectedID) { _, id in
+                // Keyboard selection scrolls instantly (plan 2.3 P1): no animation, so held arrow keys don't queue springs.
                 if let id {
-                    let animation = AccessibilitySettings.reduceMotion ? nil : PCTokens.Motion.springSmooth(reduceMotion: false)
-                    withAnimation(animation) {
-                        proxy.scrollTo(id, anchor: .center)
-                    }
+                    proxy.scrollTo(id, anchor: .center)
                 }
             }
         }
@@ -229,37 +200,29 @@ struct HistoryPanelView: View {
     
     private var emptyState: some View {
         VStack(spacing: PCTokens.Spacing.space5) {
-            // Animated clipboard illustration
             ZStack {
                 Circle()
                     .fill(PCTokens.Color.accentSoft(dark).opacity(0.2))
                     .frame(width: 80, height: 80)
-                    .scaleEffect(panelVisible ? 1 : 0.7)
-                    .opacity(panelVisible ? 1 : 0)
-                    .animation(PCTokens.Motion.springGentle(reduceMotion: AccessibilitySettings.reduceMotion).delay(0.15), value: panelVisible)
-                
+
                 Image(systemName: "doc.on.clipboard")
                     .font(.system(size: 36, weight: .light))
                     .foregroundColor(PCTokens.Color.accent)
                     .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.pulse, options: .repeating, value: panelVisible)
             }
-            
+
             VStack(spacing: PCTokens.Spacing.space2) {
                 Text("暂无剪贴板内容")
                     .font(PCTokens.Font.headingSmall)
                     .foregroundColor(PCTokens.Color.ink(dark))
-                
+
                 Text("复制任意内容后将显示在这里")
                     .font(PCTokens.Font.bodySmall)
                     .foregroundColor(PCTokens.Color.inkMuted(dark))
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .opacity(panelVisible ? 1 : 0)
-            .offset(y: panelVisible ? 0 : 12)
-            .animation(PCTokens.Motion.easeOutExpo(reduceMotion: AccessibilitySettings.reduceMotion).delay(0.2), value: panelVisible)
-            
+
             // Keyboard hint
             HStack(spacing: PCTokens.Spacing.space2) {
                 KeyCap("⇧⌘V")
@@ -274,8 +237,6 @@ struct HistoryPanelView: View {
                     .fill(PCTokens.Color.card(dark))
                     .stroke(PCTokens.Color.divider(dark), lineWidth: 1)
             )
-            .opacity(panelVisible ? 0.7 : 0)
-            .animation(PCTokens.Motion.easeOutExpo(reduceMotion: AccessibilitySettings.reduceMotion).delay(0.3), value: panelVisible)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(PCTokens.Spacing.space6)
@@ -302,7 +263,6 @@ struct HistoryPanelView: View {
                             .padding(.vertical, PCTokens.Spacing.space0)
                             .background(Capsule().fill(PCTokens.Color.accent))
                             .foregroundColor(.white)
-                            .transition(.scale.combined(with: .opacity))
                     }
                 }
                 .foregroundColor(PCTokens.Color.accent)
@@ -366,7 +326,6 @@ struct HistoryPanelView: View {
                 Image(systemName: store.selectedCollection == nil ? "folder" : "folder.fill")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(store.selectedCollection == nil ? PCTokens.Color.inkSoft(dark) : PCTokens.Color.accent)
-                    .symbolEffect(.bounce, value: store.selectedCollection != nil)
                     .frame(width: 28, height: 28)
                     .contentShape(RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous))
                     .background(
@@ -394,9 +353,6 @@ struct HistoryPanelView: View {
                 .frame(height: 1),
             alignment: .top
         )
-        .opacity(panelVisible ? 1 : 0)
-        .offset(y: panelVisible ? 0 : 8)
-        .animation(PCTokens.Motion.easeOutExpo(reduceMotion: AccessibilitySettings.reduceMotion).delay(0.12), value: panelVisible)
     }
     
     // MARK: - Helpers
@@ -445,13 +401,9 @@ struct HistoryPanelView: View {
         }
     }
     
+    /// Dismissal is owned by PanelContainer, which animates the exit and orders the window out on completion.
     private func closeWithAnimation() {
-        withAnimation(AccessibilitySettings.reduceMotion ? .linear(duration: 0.001) : PCTokens.Motion.springSwift(reduceMotion: false)) {
-            panelVisible = false
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + (AccessibilitySettings.reduceMotion ? 0 : 0.18)) {
-            onHide()
-        }
+        onHide()
     }
     
     private func openSettings() {
