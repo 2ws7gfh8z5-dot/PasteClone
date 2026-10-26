@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		00833827F41533C12FE6BCC6 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C717F7BFA847E23FB761C5F /* Theme.swift */; };
 		332127B012D7F1422541E76C /* GitHubProfileUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E2C5F02DD823180CD2A6AF /* GitHubProfileUpdater.swift */; };
+		3EF3DB7C5D5ED1997FF88663 /* ClipboardIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D2DC87C73FA58340631005E /* ClipboardIntents.swift */; };
 		4EE3DD1B388A6D46BBBC4544 /* DonationPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 055671FE7CE344EE30481BB5 /* DonationPromptView.swift */; };
 		733D4C6367023DA970BE579A /* HistoryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E9E07AA1D6B537EFE4D592B /* HistoryRow.swift */; };
 		8412D97B67708A7C2D820A00 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1E7F58D31159AD3D60E6F859 /* Assets.xcassets */; };
@@ -39,6 +40,7 @@
 /* Begin PBXFileReference section */
 		055671FE7CE344EE30481BB5 /* DonationPromptView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DonationPromptView.swift; sourceTree = "<group>"; };
 		0A0CFF028058849E88E94D9B /* HistoryPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryPanelView.swift; sourceTree = "<group>"; };
+		0D2DC87C73FA58340631005E /* ClipboardIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardIntents.swift; sourceTree = "<group>"; };
 		1C371CE09637BAAC2B622848 /* PasteCloneApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasteCloneApp.swift; sourceTree = "<group>"; };
 		1E7F58D31159AD3D60E6F859 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2E9E07AA1D6B537EFE4D592B /* HistoryRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryRow.swift; sourceTree = "<group>"; };
@@ -132,12 +134,21 @@
 			isa = PBXGroup;
 			children = (
 				1C371CE09637BAAC2B622848 /* PasteCloneApp.swift */,
+				EB38D5CCAE6C915D3305A5F9 /* Intents */,
 				2AB5398EEED8AA390F2E91B6 /* Models */,
 				BD9BFEDC40C7AF90C859C264 /* Resources */,
 				BEDCDBB12AD6B89549FD0F9B /* Services */,
 				177350AC65D0A9016E0BE7C4 /* Views */,
 			);
 			path = PasteClone;
+			sourceTree = "<group>";
+		};
+		EB38D5CCAE6C915D3305A5F9 /* Intents */ = {
+			isa = PBXGroup;
+			children = (
+				0D2DC87C73FA58340631005E /* ClipboardIntents.swift */,
+			);
+			path = Intents;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -233,6 +244,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A879451A2C07C54F45BAA3F9 /* ActiveAppService.swift in Sources */,
+				3EF3DB7C5D5ED1997FF88663 /* ClipboardIntents.swift in Sources */,
 				D103C638E9E3656100F21154 /* ClipboardItem.swift in Sources */,
 				9D25D7CC76DA9A1A7741C84A /* ClipboardMonitor.swift in Sources */,
 				8FA23AD0E2A34E25583F6328 /* ClipboardStore.swift in Sources */,

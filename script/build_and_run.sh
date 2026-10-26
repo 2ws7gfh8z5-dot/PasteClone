@@ -4,7 +4,7 @@ set -euo pipefail
 MODE="${1:-run}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$ROOT_DIR/build/Run"
-APP_NAME="PasteClone"
+APP_NAME="Just Paste"
 APP_BUNDLE="$BUILD_DIR/Build/Products/Debug/$APP_NAME.app"
 
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true

@@ -7,6 +7,7 @@ struct HistoryRow: View {
     var isSelected = false
     var onSelect: () -> Void = {}
     var onPaste: () -> Void = {}
+    var onPastePlain: () -> Void = {}
 
     @State private var hovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -215,6 +216,7 @@ struct HistoryRow: View {
     @ViewBuilder
     private var contextMenu: some View {
         Button("粘贴") { onPaste() }
+        Button("纯文本粘贴") { onPastePlain() }
         Button(item.isPinned ? "取消固定" : "固定") { withAnimation(reorderAnimation) { store.togglePin(item) } }
         Button("加入粘贴队列") { store.pushStack(item) }
         Menu("收藏到") {

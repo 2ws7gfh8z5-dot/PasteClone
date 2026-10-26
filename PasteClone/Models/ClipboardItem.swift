@@ -61,6 +61,7 @@ struct ClipboardItem: Identifiable, Codable {
         case .rtf: return Self.digest(rtfData)
         case .image: return Self.digest(imageData)
         case .file: return fileURLs?.map(\.absoluteString).joined() ?? ""
+        case .color: return Self.digest(colorData)
         default: return id.uuidString
         }
     }

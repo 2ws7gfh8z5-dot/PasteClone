@@ -5,6 +5,7 @@ import AppKit
 struct PreferencesView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("maxItems") private var maxItems = 1000
+    @AppStorage("retentionDays") private var retentionDays = 0
     @AppStorage("hotkeyEnabled") private var hotkeyEnabled = true
     @AppStorage("hotkeyPreset") private var hotkeyPreset = HotkeyPreset.shiftCommandV.rawValue
     @AppStorage("customHotkeyKeyCode") private var customKeyCode = 0
@@ -158,6 +159,25 @@ struct PreferencesView: View {
                     Text("500").tag(500)
                     Text("1000").tag(1000)
                     Text("2000").tag(2000)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 260)
+                .labelsHidden()
+            }
+
+            Divider().background(PCTokens.Color.divider(dark))
+
+            SettingsRow(
+                icon: "calendar",
+                title: "保留时长",
+                subtitle: "超过后自动删除非固定条目，固定条目不受影响",
+                dark: dark
+            ) {
+                Picker("", selection: $retentionDays) {
+                    Text("永久").tag(0)
+                    Text("7 天").tag(7)
+                    Text("30 天").tag(30)
+                    Text("90 天").tag(90)
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 260)

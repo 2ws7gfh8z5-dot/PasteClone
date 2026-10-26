@@ -20,6 +20,7 @@ targets:
       - path: PasteClone/Models
       - path: PasteClone/Views
       - path: PasteClone/Services
+      - path: PasteClone/Intents
       - path: PasteClone/PasteCloneApp.swift
       - path: PasteClone/Resources/Assets.xcassets
     settings:

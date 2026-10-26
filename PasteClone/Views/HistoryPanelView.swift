@@ -74,7 +74,10 @@ struct HistoryPanelView: View {
         // Keyboard shortcuts
         .onKeyPress(.upArrow) { moveSelection(-1); return .handled }
         .onKeyPress(.downArrow) { moveSelection(1); return .handled }
-        .onKeyPress(.return) { pasteSelected(); return .handled }
+        .onKeyPress(.return, phases: .down) { press in
+            pasteSelected(plainText: press.modifiers.contains(.shift))
+            return .handled
+        }
         .onKeyPress(.escape) { closeWithAnimation(); return .handled }
         .onKeyPress(characters: CharacterSet(charactersIn: "c"), phases: .down) { press in
             return command(press) { if let item = selectedItem { store.copy(item) } }
@@ -176,7 +179,8 @@ struct HistoryPanelView: View {
                             item: item,
                             isSelected: selectedItem?.id == item.id,
                             onSelect: { selectedID = item.id },
-                            onPaste: { paste(item) }
+                            onPaste: { paste(item) },
+                            onPastePlain: { paste(item, plainText: true) }
                         )
                         .id(item.id)
                         // Insert/remove is opacity-only (plan 2.3 P1); reduce motion keeps the same fade.
@@ -249,6 +253,7 @@ struct HistoryPanelView: View {
             // Paste Queue Button
             Button(action: {
                 closeWithAnimation()
+                _ = ActiveAppService.shared.restoreTargetApp()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { _ = store.popStack() }
             }) {
                 HStack(spacing: PCTokens.Spacing.space2) {
@@ -386,14 +391,14 @@ struct HistoryPanelView: View {
         select(min(max(current + offset, 0), items.count - 1))
         panelFocused = true
     }
-    private func pasteSelected() { if let item = selectedItem { paste(item) } }
-    
-    private func paste(_ item: ClipboardItem) {
-        logger.debug("面板粘贴操作: \(item.displayText.prefix(50), privacy: .public) (ID: \(item.id.uuidString.prefix(8), privacy: .public))")
+    private func pasteSelected(plainText: Bool = false) { if let item = selectedItem { paste(item, plainText: plainText) } }
+
+    private func paste(_ item: ClipboardItem, plainText: Bool = false) {
+        logger.debug("面板粘贴操作: \(item.displayText.prefix(50), privacy: .private) (ID: \(item.id.uuidString.prefix(8), privacy: .public))")
         closeWithAnimation()
         let restored = ActiveAppService.shared.restoreTargetApp()
         logger.debug("恢复目标应用: \(restored ? "成功" : "失败(应用可能已终止)", privacy: .public)")
-        store.paste(item, synthesizeKeypress: false)
+        store.paste(item, plainText: plainText, synthesizeKeypress: false)
         // 使用更短的延迟，避免重复触发
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             logger.debug("延迟后发送 ⌘V")

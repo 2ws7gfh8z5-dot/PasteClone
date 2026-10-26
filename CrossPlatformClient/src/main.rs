@@ -399,10 +399,7 @@ fn save(items: &[Clip]) -> io::Result<()> {
     let temporary = path.with_extension("json.tmp");
     let data = serde_json::to_vec(items).map_err(io::Error::other)?;
     fs::write(&temporary, data)?;
-    // Fixed: atomic rename without pre-deletion on Windows
-    // ponytail: Windows rename may fail if target exists; use overwrite flag if needed
-    #[cfg(target_os = "windows")]
-    fs::remove_file(&path).ok(); // Best-effort removal
+    // std::fs::rename replaces an existing target on Windows and Unix, so no pre-delete (a crash in between would lose history).
     fs::rename(&temporary, &path).or_else(|error| {
         let _ = fs::remove_file(&temporary);
         Err(error)

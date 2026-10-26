@@ -41,6 +41,7 @@ class ClipboardStore: ObservableObject {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         saveURL = dir.appendingPathComponent("history.json")
         load()
+        items = Self.pruned(items, retentionDays: UserDefaults.standard.integer(forKey: "retentionDays"))
 
         monitor.onChange = { [weak self] changeCount, item in
             guard let self else { return }
@@ -65,13 +66,17 @@ class ClipboardStore: ObservableObject {
         }
         let configuredLimit = UserDefaults.standard.object(forKey: "maxItems") as? Int ?? 1000
         let limit = max(100, configuredLimit)
-        items = Self.trimmed(items, limit: limit)
+        items = Self.trimmed(Self.pruned(items, retentionDays: UserDefaults.standard.integer(forKey: "retentionDays")), limit: limit)
         save()
     }
 
-    func paste(_ item: ClipboardItem, synthesizeKeypress: Bool = true) {
-        logger.debug("请求粘贴: \(item.displayText.prefix(50), privacy: .public) (类型: \(String(describing: item.type), privacy: .public))")
-        writeToPasteboard(item)
+    func addText(_ text: String) {
+        add(ClipboardItem(type: .text, textContent: text))
+    }
+
+    func paste(_ item: ClipboardItem, plainText: Bool = false, synthesizeKeypress: Bool = true) {
+        logger.debug("请求粘贴: \(item.displayText.prefix(50), privacy: .private) (类型: \(String(describing: item.type), privacy: .public))")
+        writeToPasteboard(item, plainText: plainText)
         if synthesizeKeypress {
             // 统一使用 0.18s 延迟，与 HistoryPanelView 保持一致
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
@@ -84,9 +89,14 @@ class ClipboardStore: ObservableObject {
         writeToPasteboard(item)
     }
 
-    private func writeToPasteboard(_ item: ClipboardItem) {
+    private func writeToPasteboard(_ item: ClipboardItem, plainText: Bool = false) {
         let pb = NSPasteboard.general
         pb.clearContents()
+        if plainText, item.type == .text || item.type == .rtf {
+            pb.setString(item.displayText, forType: .string)
+            suppressedChangeCount = pb.changeCount
+            return
+        }
         logger.debug("写入剪贴板: 类型=\(String(describing: item.type), privacy: .public)")
         switch item.type {
         case .text:
@@ -97,6 +107,7 @@ class ClipboardStore: ObservableObject {
             if let d = item.rtfData {
                 let typeStr = item.richTextType ?? NSPasteboard.PasteboardType.rtf.rawValue
                 pb.setData(d, forType: NSPasteboard.PasteboardType(typeStr))
+                pb.setString(item.displayText, forType: .string) // ponytail: plain fallback for apps that ignore RTF
                 logger.debug("写入 RTF: \(d.count, privacy: .public) 字节, 类型=\(typeStr, privacy: .public)")
             }
         case .image:
@@ -121,6 +132,12 @@ class ClipboardStore: ObservableObject {
         }
         suppressedChangeCount = pb.changeCount
         logger.debug("剪贴板写入完成, changeCount=\(pb.changeCount, privacy: .public)")
+    }
+
+    static func pruned(_ items: [ClipboardItem], retentionDays: Int, now: Date = Date()) -> [ClipboardItem] {
+        guard retentionDays > 0 else { return items }
+        let cutoff = now.addingTimeInterval(-Double(retentionDays) * 86_400)
+        return items.filter { $0.isPinned || $0.timestamp >= cutoff }
     }
 
     static func trimmed(_ items: [ClipboardItem], limit: Int) -> [ClipboardItem] {
@@ -203,6 +220,10 @@ class ClipboardStore: ObservableObject {
             items = try JSONDecoder().decode([ClipboardItem].self, from: Data(contentsOf: saveURL))
         } catch {
             NSLog("PasteClone could not load history: %@", error.localizedDescription)
+            // Move the unreadable file aside so the next save cannot overwrite it.
+            let backup = saveURL.deletingLastPathComponent()
+                .appendingPathComponent("history.corrupt-\(Int(Date().timeIntervalSince1970)).json")
+            try? FileManager.default.moveItem(at: saveURL, to: backup)
         }
     }
 }
