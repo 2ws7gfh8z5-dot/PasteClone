@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 REPO="2ws7gfh8z5-dot/PasteClone"
-VERSION="${1:-1.7.2}"
+VERSION="${1:-1.8.0}"
 BUILD_DIR="$(cd "$(dirname "$0")/../dist" && pwd)"
 NOTES="$(cd "$(dirname "$0")/.." && sed -n "/^## \\[$VERSION\\]/,/^## \\[/p" CHANGELOG.md | sed '$d')"
 if [ -z "$NOTES" ]; then NOTES="PasteClone v$VERSION"; fi

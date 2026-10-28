@@ -1,6 +1,7 @@
 import SwiftUI
 import ServiceManagement
 import AppKit
+import UniformTypeIdentifiers
 
 struct PreferencesView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
@@ -182,6 +183,15 @@ struct PreferencesView: View {
                 .pickerStyle(.segmented)
                 .frame(width: 260)
                 .labelsHidden()
+            }
+
+            Divider().background(PCTokens.Color.divider(dark))
+
+            HStack(spacing: PCTokens.Spacing.space3) {
+                Button("导出历史...") { exportHistory() }
+                    .buttonStyle(PCButtonStyle())
+                Button("导入历史...") { importHistory() }
+                    .buttonStyle(PCButtonStyle())
             }
         }
     }
@@ -510,6 +520,41 @@ struct PreferencesView: View {
     private func checkAccessibility() {
         let prompt = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         privacyStatus = AXIsProcessTrustedWithOptions(prompt) ? "已授权，可一键粘贴" : "请在系统设置中允许辅助功能权限"
+    }
+
+    private var store: ClipboardStore? { (NSApp.delegate as? AppDelegate)?.store }
+
+    private func exportHistory() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "justpaste-history.json"
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try store?.exportHistory(to: url)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "导出失败"
+            alert.informativeText = error.localizedDescription
+            alert.runModal()
+        }
+    }
+
+    private func importHistory() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let count = try store?.importHistory(from: url) ?? 0
+            let alert = NSAlert()
+            alert.messageText = "导入完成"
+            alert.informativeText = "新增 \(count) 条记录"
+            alert.runModal()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "导入失败"
+            alert.informativeText = error.localizedDescription
+            alert.runModal()
+        }
     }
 }
 

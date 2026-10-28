@@ -27,12 +27,36 @@ class ClipboardStore: ObservableObject {
         }
         let pinned = list.filter(\.isPinned)
         let rest   = list.filter { !$0.isPinned }
-        let ordered = pinned + rest
-        guard !searchText.isEmpty else { return ordered }
-        return ordered.filter { item in
-            item.displayText.localizedCaseInsensitiveContains(searchText) ||
-            (item.sourceAppName ?? "").localizedCaseInsensitiveContains(searchText)
+        guard !searchText.isEmpty else { return pinned + rest }
+        func ranked(_ group: [ClipboardItem]) -> [ClipboardItem] {
+            group.compactMap { item -> (ClipboardItem, Int)? in
+                let scores = [Self.fuzzyScore(searchText, item.displayText),
+                              item.sourceAppName.flatMap { Self.fuzzyScore(searchText, $0) }]
+                guard let best = scores.compactMap({ $0 }).max() else { return nil }
+                return (item, best)
+            }
+            .sorted { $0.1 > $1.1 }
+            .map(\.0)
         }
+        return ranked(pinned) + ranked(rest)
+    }
+
+    /// 子序列模糊匹配；query 为空时返回 0（全部匹配），不匹配返回 nil。
+    static func fuzzyScore(_ query: String, _ text: String) -> Int? {
+        if query.isEmpty { return 0 }
+        let q = Array(query.lowercased()), t = Array(text.lowercased())
+        var score = 0, ti = 0
+        for (qi, ch) in q.enumerated() {
+            var gap = 0
+            while ti < t.count && t[ti] != ch { gap += 1; ti += 1 }
+            guard ti < t.count else { return nil }
+            score += 1 - gap                                  // 命中 +1，相隔越远扣得越多
+            if qi > 0 && ti > 0 && t[ti - 1] == q[qi - 1] { score += 3 }   // 连续命中
+            if ti == 0 || (!t[ti - 1].isLetter && !t[ti - 1].isNumber) { score += 5 }  // 词首命中
+            if qi == 0 { score += max(0, 5 - ti) }            // 首次命中越靠前越好
+            ti += 1
+        }
+        return score
     }
 
     init() {
@@ -203,6 +227,22 @@ class ClipboardStore: ObservableObject {
         let item = pasteStack.removeFirst()
         paste(item)
         return item
+    }
+
+    func exportHistory(to url: URL) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        try encoder.encode(items).write(to: url, options: .atomic)
+    }
+
+    /// 按 contentHash 合并，已存在的保留本地版本；返回实际新增条数。
+    func importHistory(from url: URL) throws -> Int {
+        let imported = try JSONDecoder().decode([ClipboardItem].self, from: Data(contentsOf: url))
+        var existing = Set(items.map(\.contentHash))
+        let added = imported.filter { existing.insert($0.contentHash).inserted }
+        items += added
+        save()
+        return added.count
     }
 
     private func save() {

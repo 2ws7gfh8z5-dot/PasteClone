@@ -1,3 +1,73 @@
+## [1.8.0] - 2026-10-28
+
+### 🔍 搜索与键盘
+
+- **模糊搜索**：不再要求连续子串，按顺序命中的字符即可匹配（`gth` 能找到 `github`），连续命中和词首命中排序更靠前
+- **数字键直接粘贴**：面板中按 `1`–`9` 立即粘贴对应行，不再需要先选中再回车
+- **收藏夹与置顶结果分组排序**：搜索时固定条目仍排在最前
+
+### 🖥️ 界面
+
+- **行号角标**：每行左侧显示 `1`–`9` 编号，与数字键快捷粘贴一一对应
+- **真实来源 App 图标**：历史行显示复制来源 App 的系统图标，无来源信息时退回类型图标
+- **光标锚定面板**：面板出现在鼠标右下方，靠近屏幕边缘时自动翻折到另一侧，不再固定居中
+
+### 🔒 隐私与容量
+
+- **暂停记录 / 忽略下一次**：菜单栏可随时暂停监听，或只跳过下一次复制
+- **更多密码管理器标记**：新增 1Password、KeeWeb、TypeIt4Me、Transient 等粘贴板类型识别，命中即不记录
+- **单条大小上限**：超过 2 MB 的文本与富文本不再入库（富文本降级为纯文本），图片压缩到最长边 2048 px，单次复制的文件最多记录 50 个
+
+### 💾 数据
+
+- **JSON 导出 / 导入**：偏好设置 → 通用，可导出全部历史，也可按内容哈希合并导入并提示新增条数
+- **损坏历史自动备份**：`history.json` 无法解析时改名为 `history.corrupt-<时间戳>.json`，避免下次保存覆盖
+- **颜色去重**：颜色类型改用内容哈希去重，重复复制同一颜色不再产生新条目
+
+### 🐛 修复
+
+- 富文本写入剪贴板时同时写入纯文本，避免不接受 RTF 的应用粘贴出空内容
+- 粘贴队列先恢复目标应用再粘贴，修复从队列粘贴时落到错误窗口的问题
+- 日志中的剪贴板内容标记为私有，系统日志不再出现完整文本
+- Windows/Linux 客户端版本号同步为 1.8.0；Linux 构建暂停更新
+
+---
+
+## [1.7.2] - 2026-09-06
+
+### Icon system refresh
+
+- Replaced the legacy hand-drawn clipboard with a high-contrast document-history icon.
+- Added a macOS template menu-bar icon that adapts to light and dark menu bars.
+- Updated macOS AppIcon appearances and the Windows/Linux native window icon from one shared source asset.
+
+---
+
+## [1.7.1] - 2026-09-06
+
+### 修复
+
+- 修复面板快捷键静默失效：`onKeyPress` 回调缺少返回值，`⌘C`、`⌘F`、`⌘P`、`⌘⌫`、`⌘,` 均不响应。
+- 修复自身复制循环：隐私规则改为可持有 `com.you.justpaste` 排除项。
+- 粘贴前延迟从 0.18 s 缩短到 0.1 s，减少与系统按键事件的重复触发。
+- 移除 4 个文件中的 6 处 `URL(string:)!` 强制解包。
+
+> 版本发布时未单独撰写更新日志，以上内容据 `SCAN_REPORT_2026-09-06.md` 与对应修复提交整理。
+
+---
+
+## [1.7.0] - 2026-08-31
+
+### 可靠唤醒与粘贴
+
+- 修复重复按下 `⇧⌘V` 时面板无法真正隐藏的问题。
+- 面板加入全屏辅助空间并提升到 status bar 层级，全屏应用中仍保持可见。
+- 点击历史记录正文即可恢复原应用并粘贴到原输入框；保留右侧粘贴按钮与 Enter 快捷键。
+- macOS Universal、Windows x86_64、Linux x86_64 安装包同步发布。
+- Windows/Linux 客户端标题与包版本同步为 Just Paste 1.7.0。
+
+---
+
 ## [1.6.0] - 2026-08-29
 
 ### 🎉 全新名字：PasteClone → Just Paste
@@ -172,19 +242,3 @@
 - 收紧面板中的 Command 快捷键匹配，带 Shift、Option 或 Control 的组合不会误触发复制、粘贴、搜索、固定、删除、设置或数字定位。
 - 历史记录中间内容区允许在窄窗口下收缩，长文本和相对时间安全截断，右侧粘贴与操作按钮保持稳定可点击。
 - Windows runner 固定安装 Swift 工具链后运行共享核心测试；Windows/Linux 仍处于桌面客户端开发阶段。
-## [1.7.0] - 2026-08-31
-
-### 可靠唤醒与粘贴
-
-- 修复重复按下 `⇧⌘V` 时面板无法真正隐藏的问题。
-- 面板加入全屏辅助空间并提升到 status bar 层级，全屏应用中仍保持可见。
-- 点击历史记录正文即可恢复原应用并粘贴到原输入框；保留右侧粘贴按钮与 Enter 快捷键。
-- macOS Universal、Windows x86_64、Linux x86_64 安装包同步发布。
-- Windows/Linux 客户端标题与包版本同步为 Just Paste 1.7.0。
-## [1.7.2] - 2026-09-06
-
-### Icon system refresh
-
-- Replaced the legacy hand-drawn clipboard with a high-contrast document-history icon.
-- Added a macOS template menu-bar icon that adapts to light and dark menu bars.
-- Updated macOS AppIcon appearances and the Windows/Linux native window icon from one shared source asset.

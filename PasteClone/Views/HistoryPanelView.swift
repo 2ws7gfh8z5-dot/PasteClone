@@ -98,8 +98,10 @@ struct HistoryPanelView: View {
             return command(press) { openSettings() }
         }
         .onKeyPress(characters: .decimalDigits) { press in
-            guard press.modifiers.contains(.command),
-                  !press.modifiers.contains(.shift),
+            if !press.modifiers.contains(.command) {
+                return plainDigit(press) { paste(visibleItems[$0]) }
+            }
+            guard !press.modifiers.contains(.shift),
                   !press.modifiers.contains(.option),
                   !press.modifiers.contains(.control),
                   let number = Int(press.characters) else { return .ignored }
@@ -173,10 +175,11 @@ struct HistoryPanelView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: PCTokens.Spacing.space2) {
-                    ForEach(visibleItems, id: \.id) { item in
+                    ForEach(Array(visibleItems.enumerated()), id: \.element.id) { offset, item in
                         HistoryRow(
                             store: store,
                             item: item,
+                            index: offset + 1,
                             isSelected: selectedItem?.id == item.id,
                             onSelect: { selectedID = item.id },
                             onPaste: { paste(item) },
@@ -373,6 +376,17 @@ struct HistoryPanelView: View {
               !press.modifiers.contains(.option),
               !press.modifiers.contains(.control) else { return .ignored }
         action()
+        return .handled
+    }
+
+    /// 无 ⌘/⌥/⌃ 的数字键（允许 Shift）：搜索框聚焦时放行，否则把 0-based 下标交给 action。
+    private func plainDigit(_ press: KeyPress, action: (Int) -> Void) -> KeyPress.Result {
+        guard !searchFocused,
+              !press.modifiers.contains(.option),
+              !press.modifiers.contains(.control),
+              let number = Int(press.characters),
+              visibleItems.indices.contains(number - 1) else { return .ignored }
+        action(number - 1)
         return .handled
     }
     

@@ -13,6 +13,8 @@ struct PasteCloneApp: App {
         MenuBarExtra {
             Button("打开剪贴板 (⇧⌘V)") { appDelegate.togglePanel() }
             Button("偏好设置") { NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil) }
+            Button(ClipboardMonitor.isPaused ? "恢复记录" : "暂停记录") { ClipboardMonitor.isPaused.toggle() }
+            Button("忽略下一次复制") { ClipboardMonitor.ignoreNext = true }
             Divider()
             Button("退出 Just Paste") { NSApp.terminate(nil) }
         } label: {
@@ -94,15 +96,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isPanelPresented = true
         installHostingView(in: window)
         
-        // Position at mouse or screen center
+        // Anchor the top-left just below-right of the cursor; near an edge, fold back over the cursor.
         if let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }) ?? NSScreen.main {
-            let mouseLocation = NSEvent.mouseLocation
-            let windowFrame = window.frame
-            let visibleFrame = screen.visibleFrame
-            let x = mouseLocation.x - windowFrame.width / 2
-            let y = mouseLocation.y - windowFrame.height / 2
-            window.setFrameOrigin(NSPoint(x: max(visibleFrame.minX, min(x, visibleFrame.maxX - windowFrame.width)),
-                                         y: max(visibleFrame.minY, min(y, visibleFrame.maxY - windowFrame.height))))
+            let mouse = NSEvent.mouseLocation
+            let size = window.frame.size
+            let area = screen.visibleFrame
+            var x = mouse.x + 8
+            var y = mouse.y - 8 - size.height
+            if x + size.width > area.maxX { x = mouse.x - 8 - size.width }
+            if y < area.minY { y = mouse.y + 8 }
+            x = min(max(area.minX, x), area.maxX - size.width)
+            y = min(max(area.minY, y), area.maxY - size.height)
+            window.setFrameOrigin(NSPoint(x: x, y: y))
         }
         
         window.makeKeyAndOrderFront(nil)

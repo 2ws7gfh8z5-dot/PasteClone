@@ -4,6 +4,7 @@ import AppKit
 struct HistoryRow: View {
     @ObservedObject var store: ClipboardStore
     let item: ClipboardItem
+    var index: Int = 0
     var isSelected = false
     var onSelect: () -> Void = {}
     var onPaste: () -> Void = {}
@@ -28,6 +29,20 @@ struct HistoryRow: View {
         HStack(spacing: PCTokens.Spacing.space4) {
             iconView
                 .frame(width: 40, height: 40)
+                // 1...9 的序号用 overlay，未编号的行布局不变、图标仍然对齐
+                .overlay(alignment: .topLeading) {
+                    if (1...9).contains(index) {
+                        Text("\(index)")
+                            .font(PCTokens.Font.monoXSmall)
+                            .foregroundColor(PCTokens.Color.inkMuted(dark))
+                            .padding(.horizontal, PCTokens.Spacing.space1)
+                            .background(
+                                Capsule()
+                                    .fill(PCTokens.Color.accentSoft(dark).opacity(0.55))
+                            )
+                            .offset(x: -PCTokens.Spacing.space2, y: -PCTokens.Spacing.space2)
+                    }
+                }
 
             VStack(alignment: .leading, spacing: PCTokens.Spacing.space1) {
                 Text(item.displayText)
@@ -130,9 +145,33 @@ struct HistoryRow: View {
                     typeFallback(item.typeEmoji)
                 }
             default:
-                typeFallback(item.typeEmoji)
+                if let icon = sourceAppIcon {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 32, height: 32)
+                } else {
+                    typeFallback(item.typeEmoji)
+                }
             }
         }
+    }
+
+    private static var appIconCache: [String: NSImage] = [:]
+    private static var appIconMisses: Set<String> = []
+
+    /// 来源 App 图标；按 bundle id 缓存，未安装/无 bundle id 时返回 nil 以便回退到 emoji。
+    private var sourceAppIcon: NSImage? {
+        guard let bundleID = item.sourceAppBundleID,
+              !Self.appIconMisses.contains(bundleID) else { return nil }
+        if let cached = Self.appIconCache[bundleID] { return cached }
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            Self.appIconMisses.insert(bundleID)
+            return nil
+        }
+        let icon = NSWorkspace.shared.icon(forFile: url.path)
+        Self.appIconCache[bundleID] = icon
+        return icon
     }
 
     private func typeFallback(_ emoji: String) -> some View {
