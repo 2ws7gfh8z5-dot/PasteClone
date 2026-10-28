@@ -36,8 +36,8 @@ targets:
       properties:
         CFBundleName: "Just Paste"
         CFBundleDisplayName: "Just Paste"
-        CFBundleShortVersionString: "1.8.0"
-        CFBundleVersion: "16"
+        CFBundleShortVersionString: "1.8.1"
+        CFBundleVersion: "17"
         LSMinimumSystemVersion: "14.0"
         LSUIElement: true
         NSHumanReadableCopyright: "Copyright 2024. All rights reserved."

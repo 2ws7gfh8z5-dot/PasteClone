@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # PasteClone GitHub 监控脚本
 # 用途：监控 Star、Issues 和反馈增长
@@ -20,17 +21,17 @@ fi
 echo "⏳ 获取最新数据..."
 STATS=$(curl -s "https://api.github.com/repos/${REPO}")
 
-STARS=$(echo $STATS | grep -o '"stargazers_count":[0-9]*' | grep -o '[0-9]*')
-FORKS=$(echo $STATS | grep -o '"forks_count":[0-9]*' | grep -o '[0-9]*')
-ISSUES=$(echo $STATS | grep -o '"open_issues_count":[0-9]*' | grep -o '[0-9]*')
-WATCHES=$(echo $STATS | grep -o '"watchers_count":[0-9]*' | grep -o '[0-9]*')
+STARS=$(echo "$STATS" | grep -o '"stargazers_count":[0-9]*' | grep -o '[0-9]*' || true)
+FORKS=$(echo "$STATS" | grep -o '"forks_count":[0-9]*' | grep -o '[0-9]*' || true)
+ISSUES=$(echo "$STATS" | grep -o '"open_issues_count":[0-9]*' | grep -o '[0-9]*' || true)
+WATCHES=$(echo "$STATS" | grep -o '"watchers_count":[0-9]*' | grep -o '[0-9]*' || true)
 
 echo ""
 echo "📈 当前统计"
-echo "  Stars：⭐ $STARS"
-echo "  Forks：🍴 $FORKS"
-echo "  Open Issues：🐛 $ISSUES"
-echo "  Watchers：👁️ $WATCHES"
+echo "  Stars：⭐ ${STARS:-N/A}"
+echo "  Forks：🍴 ${FORKS:-N/A}"
+echo "  Open Issues：🐛 ${ISSUES:-N/A}"
+echo "  Watchers：👁️ ${WATCHES:-N/A}"
 echo ""
 
 # 保存历史记录

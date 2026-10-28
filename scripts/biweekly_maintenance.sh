@@ -4,6 +4,7 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="$(sed -n 's/^version = "\([^"]*\)"/\1/p' "$REPO_DIR/CrossPlatformClient/Cargo.toml" | head -1)"
+[ -n "$VERSION" ] || { echo "无法从 CrossPlatformClient/Cargo.toml 读取版本号" >&2; exit 1; }
 REPORT_DIR="$REPO_DIR/MAINTENANCE_REPORTS"
 REPORT_FILE="$REPORT_DIR/$(date +%Y-%m-%d_%H-%M-%S).md"
 mkdir -p "$REPORT_DIR"
@@ -27,8 +28,17 @@ run_check 'Windows/Linux 客户端测试' cargo test --manifest-path CrossPlatfo
 run_check 'Windows/Linux 客户端 Release 构建' cargo build --release --manifest-path CrossPlatformClient/Cargo.toml || failed=1
 run_check 'macOS Universal 构建与安装包' env VERSION="$VERSION" ./scripts/build_dmg.sh || failed=1
 
+DMG_PATH="$REPO_DIR/dist/JustPaste-$VERSION-macos-universal.dmg"
+ZIP_PATH="$REPO_DIR/dist/JustPaste-$VERSION-macos-universal.zip"
+for artifact in "$DMG_PATH" "$ZIP_PATH"; do
+  if [ ! -f "$artifact" ]; then
+    printf -- '- 缺失构建产物: %s\n' "$artifact" | tee -a "$REPORT_FILE"
+    failed=1
+  fi
+done
+
 printf '\n## 四平台发布状态\n' | tee -a "$REPORT_FILE"
-printf -- '- macOS Apple Silicon / Intel: `%s`, `%s`\n' "build/PasteClone-$VERSION.dmg" "build/PasteClone-$VERSION.zip" | tee -a "$REPORT_FILE"
+printf -- '- macOS Apple Silicon / Intel: `%s`, `%s`\n' "$DMG_PATH" "$ZIP_PATH" | tee -a "$REPORT_FILE"
 printf -- '- Windows x86_64 / Linux x86_64: 由 GitHub Actions 在对应真实 runner 构建；发布前必须确认工作流成功。\n' | tee -a "$REPORT_FILE"
 gh run list -R 2ws7gfh8z5-dot/PasteClone --workflow cross-platform.yml --limit 5 >>"$REPORT_FILE" 2>&1 || true
 

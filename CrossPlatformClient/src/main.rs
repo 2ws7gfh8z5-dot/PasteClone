@@ -16,7 +16,7 @@ use std::{
     path::PathBuf,
     sync::{
         atomic::{AtomicBool, Ordering},
-        Arc,
+        Arc, Mutex,
     },
     thread,
     time::{Duration, Instant},
@@ -69,6 +69,7 @@ struct App {
     selected: usize,
     visible: bool,
     show: Arc<AtomicBool>,
+    paste_status: Arc<Mutex<Option<String>>>,
     persist: bool,
 }
 
@@ -111,17 +112,22 @@ impl App {
             selected: 0,
             visible: true,
             show,
+            paste_status: Arc::new(Mutex::new(None)),
             persist,
         }
     }
-    fn visible_indices(&self) -> Vec<usize> {
+    fn visible_indices(&mut self) -> Vec<usize> {
         let query = self.query.to_lowercase();
-        self.items
+        // Clamp here so every caller (keys, buttons) indexes a valid row after filtering.
+        let indices = self
+            .items
             .iter()
             .enumerate()
             .filter(|(_, i)| i.text.to_lowercase().contains(&query))
             .map(|(i, _)| i)
-            .collect()
+            .collect::<Vec<usize>>();
+        self.selected = self.selected.min(indices.len().saturating_sub(1));
+        indices
     }
     fn poll_clipboard(&mut self) {
         if self.last_poll.elapsed() < Duration::from_millis(350) {
@@ -149,26 +155,43 @@ impl App {
                 // Hide first so the previously active editor regains focus before synthetic paste.
                 self.visible = false;
                 ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
-                thread::spawn(|| {
+                self.status = "正在粘贴…".into();
+                let paste_status = self.paste_status.clone();
+                let show = self.show.clone();
+                let ctx = ctx.clone();
+                thread::spawn(move || {
                     // Fixed: increased delay from 150ms to 300ms for better reliability
                     // on Windows/Linux where input injection timing is less predictable
                     thread::sleep(Duration::from_millis(300));
-                    if let Ok(mut enigo) = Enigo::new(&Settings::default()) {
+                    let injected = (|| {
+                        let mut enigo = Enigo::new(&Settings::default()).map_err(|_| ())?;
                         #[cfg(target_os = "macos")]
                         {
-                            let _ = enigo.key(Key::Meta, Press);
-                            let _ = enigo.key(Key::Unicode('v'), Click);
-                            let _ = enigo.key(Key::Meta, Release);
+                            enigo.key(Key::Meta, Press).map_err(|_| ())?;
+                            enigo.key(Key::Unicode('v'), Click).map_err(|_| ())?;
+                            enigo.key(Key::Meta, Release).map_err(|_| ())?;
                         }
                         #[cfg(not(target_os = "macos"))]
                         {
-                            let _ = enigo.key(Key::Control, Press);
-                            let _ = enigo.key(Key::Unicode('v'), Click);
-                            let _ = enigo.key(Key::Control, Release);
+                            enigo.key(Key::Control, Press).map_err(|_| ())?;
+                            enigo.key(Key::Unicode('v'), Click).map_err(|_| ())?;
+                            enigo.key(Key::Control, Release).map_err(|_| ())?;
                         }
+                        Ok::<(), ()>(())
+                    })();
+                    let message = match injected {
+                        Ok(()) => "已粘贴到当前输入框",
+                        Err(_) => "粘贴失败，可能缺少输入权限（Linux/Wayland 请检查授权）",
+                    };
+                    if let Ok(mut slot) = paste_status.lock() {
+                        *slot = Some(message.into());
                     }
+                    // Failed: bring the window back so the status (and history, for a retry) is visible.
+                    if injected.is_err() {
+                        show.store(true, Ordering::SeqCst);
+                    }
+                    ctx.request_repaint();
                 });
-                self.status = "已粘贴到当前输入框".into();
             } else {
                 self.status = "无法写入系统剪贴板".into();
             }
@@ -197,6 +220,9 @@ impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         ctx.request_repaint_after(Duration::from_millis(350));
         self.poll_clipboard();
+        if let Some(message) = self.paste_status.lock().ok().and_then(|mut s| s.take()) {
+            self.status = message;
+        }
         if self.show.swap(false, Ordering::SeqCst) {
             self.visible = true;
             ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
@@ -384,11 +410,24 @@ fn data_path() -> PathBuf {
 
 fn load() -> io::Result<Vec<Clip>> {
     let path = data_path();
-    match fs::read(path) {
-        Ok(data) => serde_json::from_slice(&data).map_err(io::Error::other),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(Vec::new()),
-        Err(error) => Err(error),
+    let error = match fs::read(&path).and_then(parse) {
+        Ok(items) => return Ok(items),
+        Err(error) => error,
+    };
+    // A crash between write and rename leaves only the temp file; recover it instead of starting empty.
+    // ponytail: a truncated temp file still fails to parse and is reported, not repaired.
+    if let Ok(items) = fs::read(path.with_extension("json.tmp")).and_then(parse) {
+        return Ok(items);
     }
+    if error.kind() == io::ErrorKind::NotFound {
+        Ok(Vec::new())
+    } else {
+        Err(error)
+    }
+}
+
+fn parse(data: Vec<u8>) -> io::Result<Vec<Clip>> {
+    serde_json::from_slice(&data).map_err(io::Error::other)
 }
 
 fn save(items: &[Clip]) -> io::Result<()> {

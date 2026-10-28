@@ -1,6 +1,6 @@
 # Just Paste 使用手册
 
-适用版本：**1.8.0**（macOS 14+） · Windows 客户端 1.8.0（纯文本）
+适用版本：**1.8.1**（macOS 14+） · Windows 客户端 1.8.1（纯文本）
 
 ---
 
@@ -44,7 +44,7 @@ Windows 有独立的纯文本客户端，能力小很多，见 [14. 已知限制
 
 ### macOS
 
-1. 打开 [Release 页面](https://github.com/2ws7gfh8z5-dot/PasteClone/releases)，下载 `JustPaste-1.8.0-macos-universal.dmg`。这是 Universal 包，Apple Silicon 和 Intel 通用，系统要求 macOS 14.0 或更高。
+1. 打开 [最新 Release 页面](https://github.com/2ws7gfh8z5-dot/PasteClone/releases/latest)，在 Assets 里下载文件名以 `macos-universal.dmg` 结尾的安装包（同名的 `.zip` 是同一份应用的压缩版）。这是 Universal 包，Apple Silicon 和 Intel 通用，系统要求 macOS 14.0 或更高。
 2. 双击打开 DMG，把 `Just Paste.app` 拖进「应用程序」文件夹。
 3. 首次打开：在「应用程序」里**右键点击** Just Paste →「打开」→ 在弹窗里再点一次「打开」。
    直接双击会被系统拦下，因为应用未经过 Apple 公证（notarized）。
@@ -59,7 +59,7 @@ Windows 有独立的纯文本客户端，能力小很多，见 [14. 已知限制
 
 ### Windows
 
-1. 下载 `PasteClone-Windows-x86_64.zip`，解压到任意目录。
+1. 从 [最新 Release 页面](https://github.com/2ws7gfh8z5-dot/PasteClone/releases/latest) 下载 `PasteClone-Windows-x86_64.zip`，解压到任意目录。
 2. 运行 `pasteclone-desktop.exe`。程序是绿色免安装的，不会写注册表。
 3. 首次运行可能被 SmartScreen 拦截：点「更多信息」→「仍要运行」。
 4. 启动后用 `Ctrl+Shift+V` 呼出窗口。
@@ -559,4 +559,4 @@ Siri 口述短语（内置）：
 
 有问题请到 [GitHub Issues](https://github.com/2ws7gfh8z5-dot/PasteClone/issues) 反馈，附上 macOS 版本和复现步骤。
 
-**版本**：1.8.0 · 最后更新：2026-10-28
+**版本**：1.8.1 · 最后更新：2026-10-29

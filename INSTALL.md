@@ -4,59 +4,56 @@
 - macOS 14.0+ (Sonoma)
 - Apple Silicon (M1/M2/M3) 或 Intel Mac
 
+> Linux 版本自 1.8.0 起暂停更新，不再发布新的 Linux 构建，本指南只覆盖 macOS。
+
 ## 安装方法
 
 ### 方法 1: 直接下载应用 (推荐)
 
-1. 访问 GitHub 仓库: https://github.com/2ws7gfh8z5-dot/PasteClone
-2. 点击 "Code" → "Download ZIP"
-3. 解压后打开 `PasteClone/PasteClone.xcodeproj`
-4. 在 Xcode 中按 `Cmd+R` 编译运行
+1. 打开 [最新 Release 页面](https://github.com/2ws7gfh8z5-dot/PasteClone/releases/latest)，在 Assets 里下载文件名以 `macos-universal.dmg` 结尾的安装包
+2. 双击打开 DMG，把 `Just Paste.app` 拖进「应用程序」文件夹
+3. 首次打开时右键点击应用 →「打开」→ 再点一次「打开」（应用未公证，直接双击会被系统拦下）
+4. 按提示授予**辅助功能**权限，否则一键粘贴不生效
 
 ### 方法 2: 使用命令行编译
 
 ```bash
-# 1. 克隆仓库
+# 1. 克隆仓库到任意目录
 git clone https://github.com/2ws7gfh8z5-dot/PasteClone.git
 cd PasteClone
 
 # 2. 生成 Xcode 项目
 xcodegen generate
 
-# 3. 编译应用
-xcodebuild -project PasteClone.xcodeproj -scheme PasteClone build CODE_SIGNING_ALLOWED=NO
-
-# 4. 运行应用
-open build/Debug/PasteClone.app
+# 3. 编译并运行（脚本会自动编译 Debug 版并打开）
+bash script/build_and_run.sh
 ```
 
 ### 方法 3: 从源码运行
 
 ```bash
-cd /Users/huaziyi/Desktop/PasteClone
+# 在上一步克隆下来的仓库目录里执行
 open PasteClone.xcodeproj
 # 在 Xcode 中按 Cmd+R 运行
 ```
 
 ## 首次使用
 
-1. **启动应用**: 双击 `PasteClone.app` 或通过命令行运行
-2. **授予权限**: 首次运行时，系统会提示需要：
-   - 辅助功能权限（用于全局热键）
-   - 剪贴板访问权限
+1. **启动应用**: 双击 `Just Paste.app` 或通过命令行运行
+2. **授予权限**: 首次一键粘贴时系统会提示**辅助功能**权限（用于模拟 `⌘V`）。全局热键用 Carbon 注册，不需要这个权限
 3. **使用热键**: 默认热键 `⇧⌘V` (Shift+Cmd+V)
-4. **搜索历史**: 在面板中输入文本、拼音或类型关键词
+4. **搜索历史**: 在面板中输入关键词（子序列模糊匹配，不支持拼音）
 5. **粘贴内容**: 按 `Enter` 或数字键 `1-9` 快速粘贴
 
 ## 设置
 
-点击菜单栏图标 → 设置，可以配置：
-- 热键组合
-- 历史保留条数（默认 1000）
-- 历史保留天数（默认 140）
-- 排除应用列表
-- 显示/隐藏菜单栏图标
-- 深色/浅色模式
+点击菜单栏图标 → 偏好设置，可以配置：
+- 开机启动
+- 保留条目数（默认 1000）与保留时长（默认永久）
+- 快捷键预设与自定义组合
+- 外观模式（跟随时间 / 浅色 / 深色）
+- 按 App 排除的隐私规则
+- 导入 / 导出历史
 
 ## 快捷键
 
@@ -73,12 +70,11 @@ open PasteClone.xcodeproj
 
 ### 应用无法启动
 - 检查是否授予了辅助功能权限
-- 系统设置 → 隐私与安全性 → 辅助功能 → 添加 PasteClone
+- 系统设置 → 隐私与安全性 → 辅助功能 → 添加 `Just Paste.app`
 
 ### 热键不响应
 - 检查是否与系统快捷键冲突
-- 在设置中重新绑定热键
-- 确保应用在前台有权限监听全局热键
+- 在偏好设置 → 快捷键中重新绑定热键或在「全局热键」开关处确认已启用
 
 ### 剪贴板没有记录
 - 检查是否在排除应用列表中
@@ -86,16 +82,16 @@ open PasteClone.xcodeproj
 - 查看菜单栏图标状态
 
 ### 搜索不到内容
-- 等待 1-2 秒让监控器捕获
+- 复制后等约 0.4 秒让监听器捕获
 - 检查搜索词是否正确
 - 尝试清空搜索框查看完整列表
 
 ## 卸载
 
 1. 退出应用（菜单栏 → 退出）
-2. 删除应用: `rm -rf ~/Applications/PasteClone.app`
+2. 删除应用: `rm -rf "/Applications/Just Paste.app"`
 3. 删除数据: `rm -rf ~/Library/Application\ Support/PasteClone`
-4. 删除偏好设置: `rm -rf ~/Library/Preferences/com.you.PasteClone.plist`
+4. 删除偏好设置: `defaults delete com.you.justpaste`
 
 ## 反馈与支持
 

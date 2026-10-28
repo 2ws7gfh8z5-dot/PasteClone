@@ -1,6 +1,6 @@
 # PasteClone 🚀
 
-一个跨平台的剪贴板管理工具（macOS 原生版 + Windows/Linux 客户端），让复制粘贴变得简单丝滑。
+一个跨平台的剪贴板管理工具（macOS 原生版 + Windows 客户端），让复制粘贴变得简单丝滑。
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 5.0+](https://img.shields.io/badge/Swift-5.0%2B-orange)
@@ -16,7 +16,7 @@
 
 ## ✨ 主要特性
 
-- 📋 **剪贴板历史** - macOS 原生客户端保存文本、富文本、图片、文件和颜色；Windows/Linux 客户端当前保存纯文本
+- 📋 **剪贴板历史** - macOS 原生客户端保存文本、富文本、图片、文件和颜色；Windows 客户端当前保存纯文本
 - 🔍 **模糊搜索** - 按顺序命中的字符即可匹配，`gth` 也能找到 `github`；文本与来源 App 名称同时参与排序
 - ⌨️ **数字键速贴** - 面板中按 `1`–`9` 直接粘贴对应行，每行左侧有编号角标
 - 🎯 **一键粘贴** - 点击历史项自动恢复来源应用并粘贴（需辅助功能权限）
@@ -57,7 +57,7 @@ Rust + egui 客户端支持纯文本历史、持久化、搜索、置顶、删�
 
 ### 安装（macOS）
 
-1. 从 [Release 页面](https://github.com/2ws7gfh8z5-dot/PasteClone/releases) 下载 `JustPaste-1.8.0-macos-universal.dmg`
+1. 打开 [最新 Release 页面](https://github.com/2ws7gfh8z5-dot/PasteClone/releases/latest)，在 Assets 里下载文件名以 `macos-universal.dmg` 结尾的安装包（同名的 `.zip` 是同一份应用的压缩版）
 2. 打开 DMG，将 `Just Paste.app` 拖入 Applications 文件夹
 3. 首次打开时如果提示"无法验证开发者"，在 Finder 中右键点应用 → 打开 → 再点"打开"
 4. 按提示授予**辅助功能**权限（系统设置 → 隐私与安全性 → 辅助功能）
@@ -161,7 +161,7 @@ MIT License - 详见 [LICENSE](./LICENSE)
 ## 🔗 链接
 
 - [GitHub 仓库](https://github.com/2ws7gfh8z5-dot/PasteClone)
-- [Release 下载](https://github.com/2ws7gfh8z5-dot/PasteClone/releases)
+- [Release 下载](https://github.com/2ws7gfh8z5-dot/PasteClone/releases/latest)
 - [问题反馈](https://github.com/2ws7gfh8z5-dot/PasteClone/issues)
 
 ---
