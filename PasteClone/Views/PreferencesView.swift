@@ -13,6 +13,8 @@ struct PreferencesView: View {
     @AppStorage("customHotkeyModifiers") private var customModifiers = 0
     @AppStorage("donationURL") private var donationURL = "https://github.com/2ws7gfh8z5-dot/PasteClone#支持开发"
     @AppStorage(PCTheme.modeKey) private var appearanceMode = PCTheme.Mode.automatic.rawValue
+    @AppStorage("profileAnalysisEnabled") private var profileEnabled = false
+    @ObservedObject private var analyzer = ProfileAnalyzer.shared
     @State private var excludedBundleIDs = PrivacyRules.excludedBundleIDs
     @State private var privacyStatus = ""
     @State private var showPrivacyDetail = false
@@ -26,8 +28,9 @@ struct PreferencesView: View {
         case hotkeys = "快捷键"
         case appearance = "外观"
         case privacy = "隐私"
+        case profile = "画像"
         case about = "关于"
-        
+
         var id: String { rawValue }
         var icon: String {
             switch self {
@@ -35,6 +38,7 @@ struct PreferencesView: View {
             case .hotkeys: return "command"
             case .appearance: return "paintbrush"
             case .privacy: return "lock.shield"
+            case .profile: return "person.crop.circle"
             case .about: return "info.circle"
             }
         }
@@ -119,6 +123,8 @@ struct PreferencesView: View {
             appearanceSection
         case .privacy:
             privacySection
+        case .profile:
+            profileSection
         case .about:
             aboutSection
         }
@@ -431,6 +437,69 @@ struct PreferencesView: View {
         }
     }
     
+    private var profileSection: some View {
+        VStack(alignment: .leading, spacing: PCTokens.Spacing.space5) {
+            SettingsRow(
+                icon: "brain",
+                title: "本地画像分析",
+                subtitle: "用系统自带的 NaturalLanguage 在后台分析复制内容，推断职业与偏好。完全本地运行，不发送任何数据。",
+                dark: dark
+            ) {
+                Toggle("", isOn: $profileEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .onChange(of: profileEnabled) { _, on in
+                        ProfileAnalyzer.isEnabled = on
+                        if on { ProfileAnalyzer.shared.analyzeIfStale() } else { ProfileAnalyzer.shared.clear() }
+                    }
+            }
+
+            Divider().background(PCTokens.Color.divider(dark))
+
+            if let p = analyzer.profile {
+                VStack(alignment: .leading, spacing: PCTokens.Spacing.space3) {
+                    Text("推断职业：\(p.occupation)")
+                        .font(PCTokens.Font.bodyMedium)
+                        .foregroundColor(PCTokens.Color.ink(dark))
+                    Text("置信度 \(Int(p.confidence * 100))%　·　共分析 \(p.apps.values.reduce(0, +)) 条")
+                        .font(PCTokens.Font.labelXSmall)
+                        .foregroundColor(PCTokens.Color.inkMuted(dark))
+                    if !p.interests.isEmpty {
+                        Text("高频词：\(p.interests.joined(separator: "、"))")
+                            .font(PCTokens.Font.labelXSmall)
+                            .foregroundColor(PCTokens.Color.inkMuted(dark))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Text("更新于 \(p.generatedAt.formatted(date: .abbreviated, time: .shortened))")
+                        .font(PCTokens.Font.labelXSmall)
+                        .foregroundColor(PCTokens.Color.inkMuted(dark))
+                }
+                .padding(.leading, PCTokens.Spacing.space7)
+            } else {
+                Text(profileEnabled ? "还没有足够的样本。累计 20 条以上文本后会自动分析，每天最多一次。"
+                                    : "未开启。开启后只记录来源 App、语言、时段等统计量，不保存剪贴板原文。")
+                    .font(PCTokens.Font.bodySmall)
+                    .foregroundColor(PCTokens.Color.inkMuted(dark))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, PCTokens.Spacing.space7)
+            }
+
+            HStack(spacing: PCTokens.Spacing.space3) {
+                Button("立即分析") { ProfileAnalyzer.shared.analyze() }
+                    .buttonStyle(PCButtonStyle())
+                    .disabled(!profileEnabled)
+                Button("删除我的画像") {
+                    ProfileAnalyzer.shared.clear()
+                    profileEnabled = false
+                    ProfileAnalyzer.isEnabled = false
+                }
+                .buttonStyle(PCButtonStyle())
+                .disabled(!profileEnabled)
+            }
+            .padding(.leading, PCTokens.Spacing.space7)
+        }
+    }
+
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: PCTokens.Spacing.space5) {
             // Changelog

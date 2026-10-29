@@ -10,6 +10,7 @@
 		00833827F41533C12FE6BCC6 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C717F7BFA847E23FB761C5F /* Theme.swift */; };
 		332127B012D7F1422541E76C /* GitHubProfileUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E2C5F02DD823180CD2A6AF /* GitHubProfileUpdater.swift */; };
 		3EF3DB7C5D5ED1997FF88663 /* ClipboardIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D2DC87C73FA58340631005E /* ClipboardIntents.swift */; };
+		49837AB99CAA3C3BBFBFD3D6 /* ProfileAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 731BDE7B9FDBC70AAE47D55C /* ProfileAnalyzer.swift */; };
 		4EE3DD1B388A6D46BBBC4544 /* DonationPromptView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 055671FE7CE344EE30481BB5 /* DonationPromptView.swift */; };
 		733D4C6367023DA970BE579A /* HistoryRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E9E07AA1D6B537EFE4D592B /* HistoryRow.swift */; };
 		8412D97B67708A7C2D820A00 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1E7F58D31159AD3D60E6F859 /* Assets.xcassets */; };
@@ -51,6 +52,7 @@
 		61CA98672F82298957871034 /* ClipboardItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardItem.swift; sourceTree = "<group>"; };
 		6A9F68B2781A998BF1B9D024 /* PrivacyRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyRules.swift; sourceTree = "<group>"; };
 		6DEBE7841F970D99EDDECCCD /* PasteCloneTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PasteCloneTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		731BDE7B9FDBC70AAE47D55C /* ProfileAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileAnalyzer.swift; sourceTree = "<group>"; };
 		83EBAE930484B45A2C53C293 /* ClipboardStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStoreTests.swift; sourceTree = "<group>"; };
 		A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyConfiguration.swift; sourceTree = "<group>"; };
 		A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
@@ -126,6 +128,7 @@
 				A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */,
 				E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */,
 				6A9F68B2781A998BF1B9D024 /* PrivacyRules.swift */,
+				731BDE7B9FDBC70AAE47D55C /* ProfileAnalyzer.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -258,6 +261,7 @@
 				B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */,
 				E8807ED80CF7B3804446A71C /* PreferencesView.swift in Sources */,
 				8E97539886B8C6A311F47C7C /* PrivacyRules.swift in Sources */,
+				49837AB99CAA3C3BBFBFD3D6 /* ProfileAnalyzer.swift in Sources */,
 				00833827F41533C12FE6BCC6 /* Theme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -77,9 +77,11 @@ class ClipboardStore: ObservableObject {
             DispatchQueue.main.async { self.add(item) }
         }
         monitor.start()
+        ProfileAnalyzer.shared.analyzeIfStale()
     }
 
     private func add(_ item: ClipboardItem) {
+        ProfileAnalyzer.shared.record(item)
         if let pinnedIndex = items.firstIndex(where: { $0.contentHash == item.contentHash && $0.isPinned }) {
             let pinned = items.remove(at: pinnedIndex)
             items.removeAll { $0.contentHash == item.contentHash }
