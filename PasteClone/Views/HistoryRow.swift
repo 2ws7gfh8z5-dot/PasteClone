@@ -88,6 +88,7 @@ struct HistoryRow: View {
         )
         .shadow(isHoveringOrSelected ? PCTokens.Shadow.level2 : PCTokens.Shadow.level1)
         .contentShape(Rectangle())
+        .onDrag { item.dragProvider }
         .onTapGesture {
             onSelect()
             onPaste()
@@ -314,6 +315,30 @@ private struct IconActionButton: View {
 // MARK: - ClipboardItem Extensions (unchanged)
 
 extension ClipboardItem {
+    /// 拖出面板的载体；多文件只带第一个 URL（ponytail: 需要多选拖拽时再加）
+    var dragProvider: NSItemProvider {
+        switch type {
+        case .text, .rtf: return NSItemProvider(object: displayText as NSString)
+        case .image:
+            if let img = previewImage { return NSItemProvider(object: img) }
+        case .file:
+            if let url = fileURLs?.first { return NSItemProvider(object: url as NSURL) }
+        case .color:
+            if let d = colorData,
+               let c = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: d),
+               let srgb = c.usingColorSpace(.sRGB) {
+                // ponytail: NSColor 不支持 NSItemProviderWriting，拖出 HEX 串
+                let hex = String(format: "#%02X%02X%02X",
+                                 Int((srgb.redComponent * 255).rounded()),
+                                 Int((srgb.greenComponent * 255).rounded()),
+                                 Int((srgb.blueComponent * 255).rounded()))
+                return NSItemProvider(object: hex as NSString)
+            }
+        case .unknown: break
+        }
+        return NSItemProvider()
+    }
+
     var typeLabel: String {
         switch type {
         case .text: return "文本"

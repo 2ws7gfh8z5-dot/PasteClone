@@ -400,12 +400,20 @@ struct HistoryPanelView: View {
     
     private var footer: some View {
         HStack(spacing: PCTokens.Spacing.space4) {
-            // Paste Queue Button
-            Button(action: {
-                closeWithAnimation()
-                _ = ActiveAppService.shared.restoreTargetApp()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { _ = store.popStack() }
-            }) {
+            // Paste Queue：点击=粘贴下一项，菜单可看队列内容/清空
+            Menu {
+                Button("粘贴下一项") { runPasteQueue() }
+                    .disabled(store.pasteStack.isEmpty)
+                if !store.pasteStack.isEmpty {
+                    Divider()
+                    ForEach(store.pasteStack) { item in
+                        Text(item.displayText.prefix(30).description)
+                            .lineLimit(1)
+                    }
+                    Divider()
+                    Button("清空队列", role: .destructive) { store.clearStack() }
+                }
+            } label: {
                 HStack(spacing: PCTokens.Spacing.space2) {
                     Image(systemName: "list.bullet.clipboard")
                         .font(.system(size: 13, weight: .semibold))
@@ -428,8 +436,8 @@ struct HistoryPanelView: View {
                         .fill(PCTokens.Color.accentSoft(dark).opacity(0.2))
                 )
             }
-            .buttonStyle(.plain)
-            .help("粘贴队列 (空时自动创建)")
+            .menuStyle(.borderlessButton)
+            .help("粘贴队列：查看待粘贴内容或开始依次粘贴")
             
             // Clear History
             Button(action: { store.clearHistory() }) {
@@ -515,6 +523,13 @@ struct HistoryPanelView: View {
         panelFocused = true
     }
     private func pasteSelected(plainText: Bool = false) { if let item = selectedItem { paste(item, plainText: plainText) } }
+
+    /// 粘贴队列：关面板、还原目标 App、弹出队首粘贴
+    private func runPasteQueue() {
+        closeWithAnimation()
+        _ = ActiveAppService.shared.restoreTargetApp()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { _ = store.popStack() }
+    }
 
     /// Jump to History：从搜索结果跳回该条目在未筛选时间线中的原位置
     private func jumpToHistory(_ item: ClipboardItem, proxy: ScrollViewProxy) {

@@ -18,18 +18,20 @@ struct ClipboardItem: Identifiable, Codable {
     var imageData: Data?
     var fileURLs: [URL]?
     var colorData: Data?
+    /// 图片 OCR 识别文本（Vision，异步回填），参与搜索
+    var ocrText: String?
     var sourceAppName: String?
     var sourceAppBundleID: String?
 
     init(id: UUID = UUID(), timestamp: Date = Date(), type: ClipboardItemType,
          textContent: String? = nil, rtfData: Data? = nil, richTextType: String? = nil, imageData: Data? = nil,
-         fileURLs: [URL]? = nil, colorData: Data? = nil,
+         fileURLs: [URL]? = nil, colorData: Data? = nil, ocrText: String? = nil,
          sourceAppName: String? = nil, sourceAppBundleID: String? = nil,
          isPinned: Bool = false, collectionName: String? = nil) {
         self.id = id; self.timestamp = timestamp; self.type = type
         self.textContent = textContent; self.rtfData = rtfData; self.richTextType = richTextType
         self.imageData = imageData; self.fileURLs = fileURLs
-        self.colorData = colorData; self.sourceAppName = sourceAppName
+        self.colorData = colorData; self.ocrText = ocrText; self.sourceAppName = sourceAppName
         self.sourceAppBundleID = sourceAppBundleID
         self.isPinned = isPinned; self.collectionName = collectionName
     }

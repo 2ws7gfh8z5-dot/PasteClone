@@ -1,6 +1,7 @@
 import Foundation
 import AppKit
 import Combine
+import Vision
 import os.log
 
 fileprivate let logger = Logger(subsystem: "com.you.PasteClone", category: "ClipboardStore")
@@ -46,7 +47,8 @@ class ClipboardStore: ObservableObject {
         func ranked(_ group: [ClipboardItem]) -> [ClipboardItem] {
             group.compactMap { item -> (ClipboardItem, Int)? in
                 let scores = [Self.fuzzyScore(searchText, item.displayText),
-                              item.sourceAppName.flatMap { Self.fuzzyScore(searchText, $0) }]
+                          item.sourceAppName.flatMap { Self.fuzzyScore(searchText, $0) },
+                          item.ocrText.flatMap { Self.fuzzyScore(searchText, $0) }]
                 guard let best = scores.compactMap({ $0 }).max() else { return nil }
                 return (item, best)
             }
@@ -110,6 +112,29 @@ class ClipboardStore: ObservableObject {
         let limit = max(100, configuredLimit)
         items = Self.trimmed(Self.pruned(items, retentionDays: UserDefaults.standard.integer(forKey: "retentionDays")), limit: limit)
         save()
+        if item.type == .image, let data = item.imageData {
+            let id = item.id
+            Task.detached(priority: .utility) { [weak self] in
+                let text = Self.recognizeText(in: data)
+                guard !text.isEmpty else { return }
+                await MainActor.run {
+                    guard let self, let i = self.items.firstIndex(where: { $0.id == id }) else { return }
+                    self.items[i].ocrText = text
+                    self.save()
+                }
+            }
+        }
+    }
+
+    /// Vision 本地 OCR，供图片条目搜索用；失败返回空串
+    private static func recognizeText(in data: Data) -> String {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLanguages = ["zh-Hans", "en"]
+        guard let handler = try? VNImageRequestHandler(data: data),
+              (try? handler.perform([request])) != nil else { return "" }
+        return (request.results ?? [])
+            .compactMap { $0.topCandidates(1).first?.string }
+            .joined(separator: " ")
     }
 
     func addText(_ text: String) {
@@ -272,6 +297,7 @@ class ClipboardStore: ObservableObject {
     }
 
     func pushStack(_ item: ClipboardItem) { pasteStack.append(item) }
+    func clearStack() { pasteStack.removeAll() }
     func popStack() -> ClipboardItem? {
         guard !pasteStack.isEmpty else { return nil }
         let item = pasteStack.removeFirst()
