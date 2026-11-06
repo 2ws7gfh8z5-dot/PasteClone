@@ -17,6 +17,7 @@ struct HotkeyRecorder: NSViewRepresentable {
             isRecording = false
             onSaved?()
         }
+        view.onCancel = { isRecording = false }
         return view
     }
     
@@ -40,10 +41,16 @@ class HotkeyRecorderView: NSView {
         }
     }
     var onKeyCapture: ((UInt32, UInt32) -> Void)?
-    
+    var onCancel: (() -> Void)?
+
     private func startMonitoring() {
         stopMonitoring()
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            // Esc 取消录制，不写键
+            if event.keyCode == UInt16(kVK_Escape) {
+                self.onCancel?()
+                return nil
+            }
             let keyCode = UInt32(event.keyCode)
             var modifiers: UInt32 = 0
             

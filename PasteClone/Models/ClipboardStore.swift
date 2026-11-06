@@ -198,11 +198,29 @@ class ClipboardStore: ObservableObject {
     }
 
     private func load() {
-        guard FileManager.default.fileExists(atPath: saveURL.path) else { return }
-        do {
-            items = try JSONDecoder().decode([ClipboardItem].self, from: Data(contentsOf: saveURL))
-        } catch {
-            NSLog("PasteClone could not load history: %@", error.localizedDescription)
+        guard FileManager.default.fileExists(atPath: saveURL.path),
+              let data = try? Data(contentsOf: saveURL) else { return }
+        if let decoded = try? JSONDecoder().decode([ClipboardItem].self, from: data) {
+            items = decoded
+            return
+        }
+        // 单条损坏不拖垮全量：逐条解码，坏记录跳过；原文件改名备份，绝不用空列表覆盖
+        let recovered = Self.recover(from: data)
+        let backup = saveURL.deletingLastPathComponent()
+            .appendingPathComponent("history.corrupt-\(Int(Date().timeIntervalSince1970)).json")
+        try? FileManager.default.moveItem(at: saveURL, to: backup)
+        items = recovered
+        logger.error("history.json 损坏，已恢复 \(recovered.count) 条，原文件备份为 \(backup.lastPathComponent, privacy: .public)")
+    }
+
+    /// 逐条容错解码：坏记录跳过，其余保留
+    internal static func recover(from data: Data) -> [ClipboardItem] {
+        guard let array = try? JSONSerialization.jsonObject(with: data) as? [Any] else { return [] }
+        return array.compactMap { element in
+            // 非对象元素（数字/字符串）会让 JSONSerialization 抛 NSException，必须先行排除
+            guard let dict = element as? [String: Any],
+                  let elementData = try? JSONSerialization.data(withJSONObject: dict) else { return nil }
+            return try? JSONDecoder().decode(ClipboardItem.self, from: elementData)
         }
     }
 }

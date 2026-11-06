@@ -279,6 +279,7 @@
 				INFOPLIST_FILE = PasteClone/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.you.justpaste;
+				PRODUCT_MODULE_NAME = PasteClone;
 				PRODUCT_NAME = "Just Paste";
 				SDKROOT = macosx;
 			};
@@ -294,6 +295,7 @@
 				INFOPLIST_FILE = PasteClone/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.you.justpaste;
+				PRODUCT_MODULE_NAME = PasteClone;
 				PRODUCT_NAME = "Just Paste";
 				SDKROOT = macosx;
 			};
@@ -311,7 +313,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.you.PasteCloneTests;
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PasteClone.app/Contents/MacOS/PasteClone";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Just Paste.app/Contents/MacOS/Just Paste";
 			};
 			name = Debug;
 		};
@@ -453,7 +455,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.you.PasteCloneTests;
 				SDKROOT = macosx;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PasteClone.app/Contents/MacOS/PasteClone";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Just Paste.app/Contents/MacOS/Just Paste";
 			};
 			name = Release;
 		};

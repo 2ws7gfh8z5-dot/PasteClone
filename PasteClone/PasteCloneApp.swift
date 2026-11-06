@@ -23,7 +23,7 @@ struct PasteCloneApp: App {
     }
 }
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     let store = ClipboardStore()
     private var panelWindow: NSWindow?
     private var isPanelPresented = false
@@ -72,6 +72,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.backgroundColor = .clear
         window.hasShadow = false // We handle shadow in SwiftUI
         window.isReleasedWhenClosed = false
+        window.delegate = self
         window.center()
 
         // Disable window animations - we use SwiftUI
@@ -119,6 +120,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard isPanelPresented, let window = panelWindow else { return }
         isPanelPresented = false
         window.orderOut(nil)
+    }
+
+    /// 失焦（点击面板外、切到其他 App）时自动收回面板
+    func windowDidResignKey(_ notification: Notification) {
+        hidePanelImmediate()
     }
 }
 

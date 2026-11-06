@@ -26,6 +26,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.you.justpaste
         PRODUCT_NAME: "Just Paste"
+        PRODUCT_MODULE_NAME: PasteClone
         INFOPLIST_FILE: PasteClone/Resources/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_PREVIEWS: YES
@@ -56,3 +57,18 @@ targets:
       - path: PasteCloneTests
     dependencies:
       - target: PasteClone
+    settings:
+      base:
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Just Paste.app/Contents/MacOS/Just Paste"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
+schemes:
+  PasteClone:
+    build:
+      targets:
+        PasteClone: all
+        PasteCloneTests:
+          - test
+    test:
+      targets:
+        - PasteCloneTests

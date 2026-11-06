@@ -20,4 +20,12 @@ final class ClipboardStoreTests: XCTestCase {
         let pinned = (0..<3).map { _ in ClipboardItem(type: .text, textContent: UUID().uuidString, isPinned: true) }
         XCTAssertEqual(ClipboardStore.trimmed(pinned, limit: 2).count, 3)
     }
+
+    func testCorruptHistoryRecoversValidItems() throws {
+        let good = ClipboardItem(type: .text, textContent: "hello")
+        let goodObj = try JSONSerialization.jsonObject(with: JSONEncoder().encode(good))
+        let data = try JSONSerialization.data(withJSONObject: [goodObj, ["broken": true], 42] as [Any])
+        let recovered = ClipboardStore.recover(from: data)
+        XCTAssertEqual(recovered.map(\.textContent), ["hello"])
+    }
 }

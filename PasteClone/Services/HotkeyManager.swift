@@ -16,27 +16,39 @@ final class HotkeyManager {
     private init() {}
 
     /// keyCode: virtual key. modifiers: Carbon flags (cmdKey/shiftKey/optionKey/controlKey)
+    /// 返回 false 表示注册失败（如组合被占用），调用方可据此回滚 UI 状态
+    @discardableResult
     func register(keyCode: UInt32 = HotkeyPreset.keyCode,
-                  modifiers: UInt32 = HotkeyPreset.modifiers) {
+                  modifiers: UInt32 = HotkeyPreset.modifiers) -> Bool {
         unregister()
 
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
                                       eventKind: UInt32(kEventHotKeyPressed))
-        InstallEventHandler(GetApplicationEventTarget(), { _, event, _ -> OSStatus in
+        let installStatus = InstallEventHandler(GetApplicationEventTarget(), { _, event, _ -> OSStatus in
             var hkID = EventHotKeyID()
             GetEventParameter(event, EventParamName(kEventParamDirectObject),
                               EventParamType(typeEventHotKeyID), nil,
                               MemoryLayout<EventHotKeyID>.size, nil, &hkID)
-            if hkID.id == 1 {
+            if hkID.id & 0x0000_FFFF == 1 {
                 logger.debug("全局热键触发")
                 DispatchQueue.main.async { HotkeyManager.shared.onTrigger?() }
             }
             return noErr
         }, 1, &eventType, nil, &handlerRef)
+        guard installStatus == noErr else {
+            logger.error("热键事件处理器安装失败: \(installStatus, privacy: .public)")
+            return false
+        }
 
         let hkID = EventHotKeyID(signature: OSType(0x5043_5043), id: 1)
-        RegisterEventHotKey(keyCode, modifiers, hkID,
-                            GetApplicationEventTarget(), 0, &hotKeyRef)
+        let status = RegisterEventHotKey(keyCode, modifiers, hkID,
+                                         GetApplicationEventTarget(), 0, &hotKeyRef)
+        guard status == noErr else {
+            logger.error("全局热键注册失败: \(status, privacy: .public)（组合可能被其他应用占用）")
+            unregister()
+            return false
+        }
+        return true
     }
 
     func unregister() {
