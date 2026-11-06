@@ -296,6 +296,27 @@ class ClipboardStore: ObservableObject {
         save()
     }
 
+    /// 预测下一条可能要粘贴的内容（对齐 Paste Intelligent Clipboard 的启发式版本）。
+    /// ponytail: 纯启发式（置顶+来源 App+新近度）；Apple Intelligence 需要时再加 FoundationModels 通道
+    static func suggest(items: [ClipboardItem], targetBundleID: String?) -> ClipboardItem? {
+        var best: (ClipboardItem, Int)?
+        for (index, item) in items.prefix(50).enumerated() {
+            if index == 0 { continue }  // 最新一条已在剪贴板上，不建议
+            var score = max(0, 50 - index)
+            if item.isPinned { score += 40 }
+            if let target = targetBundleID, item.sourceAppBundleID == target { score += 25 }
+            if let b = best, b.1 >= score { continue }
+            best = (item, score)
+        }
+        guard let b = best, b.1 >= 60 else { return nil }  // 至少需要一个强信号
+        return b.0
+    }
+
+    /// 预测建议（无筛选/搜索时才有意义，由面板决定何时调用）
+    func suggestion() -> ClipboardItem? {
+        Self.suggest(items: items, targetBundleID: ActiveAppService.shared.targetBundleID)
+    }
+
     func pushStack(_ item: ClipboardItem) { pasteStack.append(item) }
     func clearStack() { pasteStack.removeAll() }
     func popStack() -> ClipboardItem? {

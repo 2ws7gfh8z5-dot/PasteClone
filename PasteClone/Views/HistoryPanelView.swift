@@ -44,6 +44,10 @@ struct HistoryPanelView: View {
 
             filterStrip
 
+            if let suggestion = currentSuggestion {
+                suggestionBanner(suggestion)
+            }
+
             if visibleItems.isEmpty {
                 emptyState
             } else {
@@ -311,6 +315,45 @@ struct HistoryPanelView: View {
         }
         .menuStyle(.borderlessButton)
         .help("按类型筛选")
+    }
+
+    /// 预测建议横幅：只在无搜索/无筛选的原始时间线上出现
+    private var currentSuggestion: ClipboardItem? {
+        guard store.searchText.isEmpty, store.selectedCollection == nil, store.typeFilter == nil else { return nil }
+        return store.suggestion()
+    }
+
+    private func suggestionBanner(_ item: ClipboardItem) -> some View {
+        Button { paste(item) } label: {
+            HStack(spacing: PCTokens.Spacing.space2) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(PCTokens.Color.accent)
+                Text(item.displayText)
+                    .font(PCTokens.Font.bodySmall)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .foregroundColor(PCTokens.Color.ink(dark))
+                Spacer(minLength: PCTokens.Spacing.space2)
+                Text("建议")
+                    .font(PCTokens.Font.labelXSmall)
+                    .foregroundColor(PCTokens.Color.accent)
+            }
+            .padding(.horizontal, PCTokens.Spacing.space3)
+            .padding(.vertical, PCTokens.Spacing.space2)
+            .background(
+                RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous)
+                    .fill(PCTokens.Color.accentSoft(dark).opacity(0.25))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous)
+                            .stroke(PCTokens.Color.accent.opacity(0.3), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, PCTokens.Spacing.space4)
+        .padding(.bottom, PCTokens.Spacing.space2)
+        .help("点击直接粘贴这条建议")
     }
 
     // MARK: - History List

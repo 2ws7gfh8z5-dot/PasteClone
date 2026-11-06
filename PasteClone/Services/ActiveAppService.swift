@@ -32,6 +32,9 @@ final class ActiveAppService {
         logger.debug("captureTargetApp → \(app.localizedName ?? "?", privacy: .public) (\(app.bundleIdentifier ?? "?", privacy: .public), PID: \(app.processIdentifier, privacy: .public))")
     }
 
+    /// 面板呼出前记录的目标 App 的 bundleID（用于预测建议）
+    var targetBundleID: String? { targetApp?.bundleIdentifier }
+
     /// Restore the app that owned focus before the history panel appeared.
     @discardableResult
     func restoreTargetApp() -> Bool {
