@@ -4,9 +4,6 @@ import AppKit
 // MARK: - Accessibility Helpers
 
 enum AccessibilitySettings {
-    static var reduceMotion: Bool {
-        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-    }
     static var reduceTransparency: Bool {
         NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
     }
@@ -141,30 +138,16 @@ enum PCTokens {
     
     // Animation Presets — Spring-first, respect reduceMotion
     enum Motion {
-        // Spring presets (response, dampingFraction, blendDuration)
-        static let springSwift   = (response: 0.28, damping: 0.82, blend: 0.0)   // 快速、干脆
-        static let springSmooth  = (response: 0.38, damping: 0.78, blend: 0.0)   // 标准、丝滑
-        static let springGentle  = (response: 0.48, damping: 0.80, blend: 0.0)   // 柔和、入场
-        static let springBouncy  = (response: 0.42, damping: 0.68, blend: 0.0)   // 玩味、强调
-        static let springStiff   = (response: 0.22, damping: 0.90, blend: 0.0)   // 微交互、按钮
-        
-        // Easing curves (fallback for non-spring)
-        static let easeOutExpo   = Animation.timingCurve(0.16, 1.0, 0.3, 1.0, duration: 0.24)
-        static let easeOutCubic  = Animation.timingCurve(0.33, 1.0, 0.68, 1.0, duration: 0.2)
-        static let easeInOutCubic = Animation.timingCurve(0.65, 0.0, 0.35, 1.0, duration: 0.22)
-        static let easeInCubic   = Animation.timingCurve(0.55, 0.055, 0.675, 0.19, duration: 0.18)
-        
-        // Duration constants
-        static let durationInstant : Double = 0.0
-        static let durationMicro   : Double = 0.08  // press feedback
-        static let durationFast    : Double = 0.14  // hover, focus
-        static let durationNormal  : Double = 0.22  // standard transitions
-        static let durationSlow    : Double = 0.32  // panel enter/exit
-        static let durationLeisure : Double = 0.44  // complex choreography
-        
-        // Stagger
-        static let staggerBase : Double = 0.04  // per-item delay
-        static let staggerMax  : Double = 0.24  // cap total stagger
+        // Motion tokens (plan 2.1). Values are user-approved.
+        static let hover   = Animation.linear(duration: 0.083)
+        static let press   = Animation.spring(response: 0.22, dampingFraction: 0.90)
+        static let enter   = Animation.timingCurve(0, 0, 0, 1, duration: 0.167)
+        static let exit    = Animation.timingCurve(1, 0, 1, 1, duration: 0.12)
+        static let reorder = Animation.timingCurve(0.55, 0.55, 0, 1, duration: 0.25)
+        /// Reduce Motion replacement for every token above: opacity-only linear fade.
+        static let reduce  = Animation.linear(duration: 0.083)
+        /// Pressed-state scale shared by all press feedback.
+        static let pressScale: CGFloat = 0.96
     }
     
     // Z-index layers
@@ -197,41 +180,10 @@ extension PCTokens.Color {
 // MARK: - Animation Factory
 
 extension PCTokens.Motion {
-    /// 统一入口：根据 reduceMotion 返回对应动画
-    static func animation(_ preset: (response: Double, damping: Double, blend: Double), reduceMotion: Bool = AccessibilitySettings.reduceMotion) -> Animation {
-        reduceMotion ? .linear(duration: 0.001) : .spring(response: preset.response, dampingFraction: preset.damping, blendDuration: preset.blend)
-    }
-    
-    static func animation(_ curve: Animation, reduceMotion: Bool = AccessibilitySettings.reduceMotion) -> Animation {
-        reduceMotion ? .linear(duration: 0.001) : curve
-    }
-    
-    static func springSwift(reduceMotion: Bool = AccessibilitySettings.reduceMotion) -> Animation {
-        animation(springSwift, reduceMotion: reduceMotion)
-    }
-    static func springSmooth(reduceMotion: Bool = AccessibilitySettings.reduceMotion) -> Animation {
-        animation(springSmooth, reduceMotion: reduceMotion)
-    }
-    static func springGentle(reduceMotion: Bool = AccessibilitySettings.reduceMotion) -> Animation {
-        animation(springGentle, reduceMotion: reduceMotion)
-    }
-    static func springBouncy(reduceMotion: Bool = AccessibilitySettings.reduceMotion) -> Animation {
-        animation(springBouncy, reduceMotion: reduceMotion)
-    }
-    static func springStiff(reduceMotion: Bool = AccessibilitySettings.reduceMotion) -> Animation {
-        animation(springStiff, reduceMotion: reduceMotion)
-    }
-    
-    static func easeOutExpo(reduceMotion: Bool = AccessibilitySettings.reduceMotion) -> Animation {
-        animation(easeOutExpo, reduceMotion: reduceMotion)
-    }
-    static func easeOutCubic(reduceMotion: Bool = AccessibilitySettings.reduceMotion) -> Animation {
-        animation(easeOutCubic, reduceMotion: reduceMotion)
-    }
-    
-    // 交错延迟计算
-    static func staggerDelay(index: Int, base: Double = staggerBase, max: Double = staggerMax) -> Double {
-        min(Double(index) * base, max)
+    /// Single resolver: every animation site passes its token through here.
+    /// When Reduce Motion is on, every site gets the same opacity-only linear fade.
+    static func resolve(_ token: Animation, reduced: Bool) -> Animation {
+        reduced ? reduce : token
     }
 }
 
@@ -268,44 +220,23 @@ extension View {
     }
 }
 
-// MARK: - Button Styles (Spring-based)
+// MARK: - Button Styles (single press token, plan 2.3 P0/P1)
 
 struct PCButtonStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     var prominent = false
-    
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.94 : 1)
-            .opacity(configuration.isPressed && !reduceMotion ? 0.9 : 1)
-            .animation(reduceMotion ? nil : PCTokens.Motion.springStiff(reduceMotion: reduceMotion), value: configuration.isPressed)
-    }
-}
 
-struct PCIconButtonStyle: ButtonStyle {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var hovering = false
-    
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 12, weight: .semibold))
-            .frame(width: 28, height: 28)
-            .background(
-                RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous)
-                    .fill(hovering ? PCTokens.Color.accentSoft(true).opacity(0.55) : .clear)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous))
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.88 : (hovering && !reduceMotion ? 1.06 : 1))
-            .onHover { hovering = $0 }
-            .animation(reduceMotion ? nil : PCTokens.Motion.springSwift(reduceMotion: reduceMotion), value: hovering)
-            .animation(reduceMotion ? nil : PCTokens.Motion.springStiff(reduceMotion: reduceMotion), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? PCTokens.Motion.pressScale : 1)
+            .animation(PCTokens.Motion.resolve(PCTokens.Motion.press, reduced: reduceMotion), value: configuration.isPressed)
     }
 }
 
 struct PCProminentButtonStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hovering = false
-    
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(PCTokens.Font.labelMedium)
@@ -317,10 +248,10 @@ struct PCProminentButtonStyle: ButtonStyle {
                     .shadow(hovering && !reduceMotion ? PCTokens.Shadow.glow : PCTokens.Shadow.level1)
             )
             .foregroundColor(.white)
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.96 : (hovering && !reduceMotion ? 1.02 : 1))
+            .scaleEffect(configuration.isPressed && !reduceMotion ? PCTokens.Motion.pressScale : 1)
             .onHover { hovering = $0 }
-            .animation(reduceMotion ? nil : PCTokens.Motion.springSwift(reduceMotion: reduceMotion), value: hovering)
-            .animation(reduceMotion ? nil : PCTokens.Motion.springStiff(reduceMotion: reduceMotion), value: configuration.isPressed)
+            .animation(PCTokens.Motion.resolve(PCTokens.Motion.hover, reduced: reduceMotion), value: hovering)
+            .animation(PCTokens.Motion.resolve(PCTokens.Motion.press, reduced: reduceMotion), value: configuration.isPressed)
     }
 }
 

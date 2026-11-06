@@ -11,12 +11,11 @@ struct PreferencesView: View {
     @AppStorage("customHotkeyModifiers") private var customModifiers = 0
     @AppStorage("donationURL") private var donationURL = "https://github.com/2ws7gfh8z5-dot/PasteClone#支持开发"
     @AppStorage(PCTheme.modeKey) private var appearanceMode = PCTheme.Mode.automatic.rawValue
-    @State private var clock = Date()
     @State private var excludedBundleIDs = PrivacyRules.excludedBundleIDs
     @State private var privacyStatus = ""
     @State private var showPrivacyDetail = false
     @State private var activeSection: SectionID? = .general
-    @Namespace private var sectionNamespace
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     private var dark: Bool { PCTheme.isDark() }
     
@@ -51,13 +50,11 @@ struct PreferencesView: View {
                         SectionCard(
                             id: section,
                             isActive: activeSection == section,
-                            namespace: sectionNamespace,
                             dark: dark
                         ) { sectionContent(for: section) }
                         .onTapGesture {
-                            withAnimation(PCTokens.Motion.springSmooth(reduceMotion: AccessibilitySettings.reduceMotion)) {
-                                activeSection = activeSection == section ? nil : section
-                            }
+                            // Accordion animation is cut (plan 2.3); toggle is instant.
+                            activeSection = activeSection == section ? nil : section
                         }
                     }
                 }
@@ -78,7 +75,6 @@ struct PreferencesView: View {
         )
         .preferredColorScheme(dark ? .dark : .light)
         .onAppear { launchAtLogin = SMAppService.mainApp.status == .enabled }
-        .onReceive(Timer.publish(every: 60, on: .main, in: .common).autoconnect()) { clock = $0 }
     }
     
     // MARK: - Header
@@ -239,14 +235,14 @@ struct PreferencesView: View {
                                 .fill(PCTokens.Color.accentSoft(dark).opacity(0.15))
                                 .stroke(PCTokens.Color.accent.opacity(0.3), lineWidth: 1)
                         )
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                        
+                        .transition(.opacity)
+
                         Text("点击输入框后按下想要的组合键")
                             .font(PCTokens.Font.bodyXSmall)
                             .foregroundColor(PCTokens.Color.inkMuted(dark))
                             .padding(.leading, PCTokens.Spacing.space7)
                     }
-                    .animation(PCTokens.Motion.springSmooth(reduceMotion: AccessibilitySettings.reduceMotion), value: hotkeyPreset)
+                    .animation(PCTokens.Motion.resolve(PCTokens.Motion.enter, reduced: reduceMotion), value: hotkeyPreset)
                 }
             }
         }
@@ -343,10 +339,10 @@ struct PreferencesView: View {
                                 .fill(PCTokens.Color.card(dark))
                                 .stroke(PCTokens.Color.divider(dark), lineWidth: 1)
                         )
-                        .transition(.opacity.combined(with: .move(edge: .leading)))
+                        .transition(.opacity)
                     }
                 }
-                
+
                 // Add excluded app button
                 Menu {
                     ForEach(runningApps, id: \.bundleIdentifier) { app in
@@ -400,8 +396,8 @@ struct PreferencesView: View {
                 }
                 .padding(.leading, PCTokens.Spacing.space7)
             }
-            .animation(PCTokens.Motion.springSmooth(reduceMotion: AccessibilitySettings.reduceMotion), value: excludedBundleIDs)
-            .animation(PCTokens.Motion.springSmooth(reduceMotion: AccessibilitySettings.reduceMotion), value: privacyStatus)
+            .animation(PCTokens.Motion.resolve(PCTokens.Motion.enter, reduced: reduceMotion), value: excludedBundleIDs)
+            .animation(PCTokens.Motion.resolve(PCTokens.Motion.enter, reduced: reduceMotion), value: privacyStatus)
         }
     }
     
@@ -543,17 +539,15 @@ private struct SettingsRow<Content: View>: View {
 private struct SectionCard<Content: View>: View {
     let id: PreferencesView.SectionID
     let isActive: Bool
-    let namespace: Namespace.ID
     let dark: Bool
     let content: Content
-    
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hover = false
-    
-    init(id: PreferencesView.SectionID, isActive: Bool, namespace: Namespace.ID, dark: Bool, @ViewBuilder content: () -> Content) {
+
+    init(id: PreferencesView.SectionID, isActive: Bool, dark: Bool, @ViewBuilder content: () -> Content) {
         self.id = id
         self.isActive = isActive
-        self.namespace = namespace
         self.dark = dark
         self.content = content()
     }
@@ -566,20 +560,16 @@ private struct SectionCard<Content: View>: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(isActive ? PCTokens.Color.accent : PCTokens.Color.inkSoft(dark))
                     .symbolRenderingMode(.hierarchical)
-                    .matchedGeometryEffect(id: "icon_\(id.rawValue)", in: namespace, properties: .position)
-                
+
                 Text(id.rawValue)
                     .font(PCTokens.Font.headingMedium)
                     .foregroundColor(PCTokens.Color.ink(dark))
-                    .matchedGeometryEffect(id: "title_\(id.rawValue)", in: namespace, properties: .position)
-                
+
                 Spacer()
-                
+
                 Image(systemName: isActive ? "chevron.up" : "chevron.down")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(PCTokens.Color.inkMuted(dark))
-                    .rotationEffect(.degrees(isActive ? 0 : 0))
-                    .animation(PCTokens.Motion.springSwift(reduceMotion: reduceMotion), value: isActive)
             }
             .padding(.horizontal, PCTokens.Spacing.space4)
             .padding(.vertical, PCTokens.Spacing.space3)
@@ -589,7 +579,7 @@ private struct SectionCard<Content: View>: View {
                     .fill(hover ? PCTokens.Color.card(dark).opacity(0.6) : .clear)
             )
             .onHover { hover = $0 }
-            .animation(PCTokens.Motion.springSwift(reduceMotion: reduceMotion), value: hover)
+            .animation(PCTokens.Motion.resolve(PCTokens.Motion.hover, reduced: reduceMotion), value: hover)
             
             // Content
             if isActive {
@@ -599,22 +589,16 @@ private struct SectionCard<Content: View>: View {
                 .padding(.horizontal, PCTokens.Spacing.space4)
                 .padding(.bottom, PCTokens.Spacing.space4)
                 .padding(.top, PCTokens.Spacing.space2)
-                .transition(
-                    .asymmetric(
-                        insertion: .opacity.combined(with: .move(edge: .top)).combined(with: .scale(scale: 0.98, anchor: .top)),
-                        removal: .opacity.combined(with: .move(edge: .top)).combined(with: .scale(scale: 0.98, anchor: .top))
-                    )
-                )
+                .transition(.opacity)
             }
         }
         .background(
             RoundedRectangle(cornerRadius: PCTokens.Radius.r4, style: .continuous)
                 .fill(PCTokens.Color.card(dark).opacity(isActive ? 1 : 0.5))
                 .stroke(PCTokens.Color.divider(dark).opacity(isActive ? 0.5 : 0.3), lineWidth: isActive ? 1.5 : 1)
-                .matchedGeometryEffect(id: "bg_\(id.rawValue)", in: namespace, properties: .frame)
         )
         .shadow(isActive ? PCTokens.Shadow.level2 : PCTokens.Shadow.level1)
-        .animation(PCTokens.Motion.springSmooth(reduceMotion: reduceMotion), value: isActive)
+        .animation(PCTokens.Motion.resolve(PCTokens.Motion.enter, reduced: reduceMotion), value: isActive)
     }
 }
 
@@ -716,6 +700,6 @@ private struct LinkButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hover = $0 }
-        .animation(PCTokens.Motion.springSwift(reduceMotion: reduceMotion), value: hover)
+        .animation(PCTokens.Motion.resolve(PCTokens.Motion.hover, reduced: reduceMotion), value: hover)
     }
 }

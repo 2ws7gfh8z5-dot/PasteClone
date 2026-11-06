@@ -26,7 +26,6 @@ struct PasteCloneApp: App {
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let store = ClipboardStore()
     private var panelWindow: NSWindow?
-    private var panelHostingView: NSHostingView<PanelContainer>?
     private var isPanelPresented = false
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -59,11 +58,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func makePanel() {
-        let container = PanelContainer(store: store, onDismiss: { [weak self] in self?.hidePanelImmediate() })
-        let hosting = NSHostingView(rootView: container)
-        hosting.translatesAutoresizingMaskIntoConstraints = false
-        panelHostingView = hosting
-        
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 380, height: 480),
             styleMask: [.borderless, .fullSizeContentView],
@@ -77,19 +71,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false // We handle shadow in SwiftUI
-        window.contentView = hosting
         window.isReleasedWhenClosed = false
         window.center()
-        
+
         // Disable window animations - we use SwiftUI
         window.animationBehavior = .none
-        
+
         panelWindow = window
+        installHostingView(in: window)
     }
-    
+
+    /// Recreated on every show so PanelContainer's enter state resets (onAppear fires again).
+    private func installHostingView(in window: NSWindow) {
+        let container = PanelContainer(store: store, onDismiss: { [weak self] in self?.hidePanelImmediate() })
+        let hosting = NSHostingView(rootView: container)
+        hosting.translatesAutoresizingMaskIntoConstraints = false
+        window.contentView = hosting
+    }
+
     private func showPanel(_ window: NSWindow) {
         guard !isPanelPresented else { return }
         isPanelPresented = true
+        installHostingView(in: window)
         
         // Position at mouse or screen center
         if let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }) ?? NSScreen.main {
@@ -104,11 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
-        
-        // Trigger SwiftUI entrance animation via state change
-        if let container = panelHostingView?.rootView {
-            // The PanelContainer will animate on appear
-        }
+
     }
     
     private func hidePanel(_ window: NSWindow) {
@@ -141,11 +140,11 @@ struct PanelContainer: View {
             // Background dim
             Color.black.opacity(isVisible ? 0.15 : 0)
                 .ignoresSafeArea()
-                .animation(reduceMotion ? .linear(duration: 0.001) : PCTokens.Motion.easeOutExpo(reduceMotion: false), value: isVisible)
+                .animation(PCTokens.Motion.resolve(PCTokens.Motion.enter, reduced: reduceMotion), value: isVisible)
                 .onTapGesture { dismissWithAnimation() }
             
             // Main Panel
-            HistoryPanelView(store: store, onHide: dismissWithAnimation)
+            HistoryPanelView(store: store, panelVisible: isVisible, onHide: dismissWithAnimation)
                 .offset(dragOffset)
                 .gesture(
                     DragGesture()
@@ -158,7 +157,7 @@ struct PanelContainer: View {
                             if value.translation.height > 100 {
                                 dismissWithAnimation()
                             } else {
-                                withAnimation(PCTokens.Motion.springBouncy(reduceMotion: reduceMotion)) {
+                                withAnimation(PCTokens.Motion.resolve(PCTokens.Motion.enter, reduced: reduceMotion)) {
                                     dragOffset = .zero
                                 }
                             }
@@ -168,7 +167,7 @@ struct PanelContainer: View {
         .frame(width: 380, height: 480)
         .onAppear {
             panelFocused = true
-            withAnimation(reduceMotion ? .linear(duration: 0.001) : PCTokens.Motion.springGentle(reduceMotion: false)) {
+            withAnimation(PCTokens.Motion.resolve(PCTokens.Motion.enter, reduced: reduceMotion)) {
                 isVisible = true
             }
         }
@@ -179,10 +178,13 @@ struct PanelContainer: View {
     }
     
     private func dismissWithAnimation() {
-        withAnimation(reduceMotion ? .linear(duration: 0.001) : PCTokens.Motion.springSwift(reduceMotion: false)) {
+        // Completion-based: orderOut runs only after the exit animation finishes (macOS 14+).
+        withAnimation(
+            PCTokens.Motion.resolve(PCTokens.Motion.exit, reduced: reduceMotion),
+            completionCriteria: .logicallyComplete
+        ) {
             isVisible = false
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + (reduceMotion ? 0 : 0.22)) {
+        } completion: {
             onDismiss()
         }
     }
