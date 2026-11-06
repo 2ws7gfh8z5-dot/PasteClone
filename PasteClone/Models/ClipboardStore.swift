@@ -9,21 +9,36 @@ class ClipboardStore: ObservableObject {
     @Published var items: [ClipboardItem] = []
     @Published var searchText: String = ""
     @Published var selectedCollection: String? = nil
+    @Published var typeFilter: ClipboardItemType? = nil
     @Published var pasteStack: [ClipboardItem] = []
 
     private let monitor = ClipboardMonitor()
     private let saveURL: URL
     private var suppressedChangeCount: Int?
 
+    /// 看板排列顺序（创建顺序）；仅存名字，成员关系仍在 item.collectionName
+    @Published private(set) var pinboardOrder: [String] = [] {
+        didSet { UserDefaults.standard.set(pinboardOrder, forKey: "pinboardOrder") }
+    }
+
     var collections: [String] {
-        let names = items.compactMap(\.collectionName)
-        return Array(Set(names)).sorted()
+        // 已登记的空看板也要显示，否则"新建"后会从条上消失
+        Self.orderedCollections(present: Set(items.compactMap(\.collectionName)).union(pinboardOrder), order: pinboardOrder)
+    }
+
+    /// 已登记的看板按创建顺序在前，未登记的按字母序兜底
+    static func orderedCollections(present: Set<String>, order: [String]) -> [String] {
+        let ordered = order.filter { present.contains($0) }
+        return ordered + present.subtracting(ordered).sorted()
     }
 
     var filteredItems: [ClipboardItem] {
         var list = items
         if let col = selectedCollection {
             list = list.filter { $0.collectionName == col }
+        }
+        if let tf = typeFilter {
+            list = list.filter { $0.type == tf }
         }
         let pinned = list.filter(\.isPinned)
         let rest   = list.filter { !$0.isPinned }
@@ -64,6 +79,7 @@ class ClipboardStore: ObservableObject {
             .appendingPathComponent("PasteClone", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         saveURL = dir.appendingPathComponent("history.json")
+        pinboardOrder = UserDefaults.standard.stringArray(forKey: "pinboardOrder") ?? []
         load()
         items = Self.pruned(items, retentionDays: UserDefaults.standard.integer(forKey: "retentionDays"))
 
@@ -202,6 +218,37 @@ class ClipboardStore: ObservableObject {
     func setCollection(_ item: ClipboardItem, name: String?) {
         guard let i = items.firstIndex(where: { $0.id == item.id }) else { return }
         items[i].collectionName = name
+        if let name { registerCollection(name) }
+        save()
+    }
+
+    /// 登记看板（保持创建顺序），重复名忽略
+    func registerCollection(_ name: String) {
+        let name = name.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty, !pinboardOrder.contains(name) else { return }
+        pinboardOrder.append(name)
+    }
+
+    /// 重命名看板：成员关系、顺序、选中态一起带走
+    func renameCollection(from old: String, to new: String) {
+        let new = new.trimmingCharacters(in: .whitespaces)
+        guard old != new, !new.isEmpty else { return }
+        for i in items.indices where items[i].collectionName == old {
+            items[i].collectionName = new
+        }
+        if let idx = pinboardOrder.firstIndex(of: old) {
+            pinboardOrder[idx] = new
+        } else {
+            registerCollection(new)
+        }
+        if selectedCollection == old { selectedCollection = new }
+        save()
+    }
+
+    /// 编辑文本条目内容
+    func updateText(_ item: ClipboardItem, text: String) {
+        guard let i = items.firstIndex(where: { $0.id == item.id }), items[i].type == .text else { return }
+        items[i].textContent = text
         save()
     }
 
@@ -219,6 +266,7 @@ class ClipboardStore: ObservableObject {
         for index in items.indices where items[index].collectionName == name {
             items[index].collectionName = nil
         }
+        pinboardOrder.removeAll { $0 == name }
         if selectedCollection == name { selectedCollection = nil }
         save()
     }

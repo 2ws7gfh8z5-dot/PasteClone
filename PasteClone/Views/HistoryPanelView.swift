@@ -16,6 +16,13 @@ struct HistoryPanelView: View {
     @AppStorage(PCTheme.modeKey) private var appearanceMode = PCTheme.Mode.automatic.rawValue
     @State private var searchTextLocal = ""
     @State private var showPasteQueueHint = false
+    @State private var previewItem: ClipboardItem? = nil
+    @State private var editItem: ClipboardItem? = nil
+    @State private var editText = ""
+    @State private var showNewBoardAlert = false
+    @State private var newBoardName = ""
+    @State private var renameFrom: String? = nil
+    @State private var renameText = ""
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var dark: Bool { PCTheme.isDark() }
@@ -35,6 +42,8 @@ struct HistoryPanelView: View {
                 .background(PCTokens.Color.divider(dark))
                 .padding(.horizontal, PCTokens.Spacing.space4)
 
+            filterStrip
+
             if visibleItems.isEmpty {
                 emptyState
             } else {
@@ -44,6 +53,32 @@ struct HistoryPanelView: View {
             footer
         }
         .frame(width: 380, height: 480)
+        .overlay {
+            if let item = previewItem {
+                PreviewOverlay(item: item) { previewItem = nil }
+            } else if editItem != nil {
+                EditOverlay(text: $editText,
+                            onSave: { if let item = editItem { store.updateText(item, text: editText) }; editItem = nil },
+                            onCancel: { editItem = nil })
+            }
+        }
+        .alert("新建收藏夹", isPresented: $showNewBoardAlert) {
+            TextField("名称", text: $newBoardName)
+            Button("创建") {
+                let name = newBoardName.trimmingCharacters(in: .whitespaces)
+                if !name.isEmpty { store.registerCollection(name); store.selectedCollection = name }
+                newBoardName = ""
+            }
+            Button("取消", role: .cancel) { newBoardName = "" }
+        }
+        .alert("重命名收藏夹", isPresented: Binding(get: { renameFrom != nil }, set: { if !$0 { renameFrom = nil } })) {
+            TextField("名称", text: $renameText)
+            Button("重命名") {
+                if let old = renameFrom { store.renameCollection(from: old, to: renameText) }
+                renameFrom = nil
+            }
+            Button("取消", role: .cancel) { renameFrom = nil }
+        }
         .background(
             ZStack {
                 PCTokens.Color.panel(dark).opacity(0.92)
@@ -72,13 +107,35 @@ struct HistoryPanelView: View {
         .onChange(of: store.filteredItems.map(\.id)) { _, _ in normalizeSelection() }
         .onChange(of: store.searchText) { _, new in searchTextLocal = new }
         // Keyboard shortcuts
-        .onKeyPress(.upArrow) { moveSelection(-1); return .handled }
-        .onKeyPress(.downArrow) { moveSelection(1); return .handled }
+        .onKeyPress(.upArrow) {
+            if overlayOpen { return .handled }
+            moveSelection(-1); return .handled
+        }
+        .onKeyPress(.downArrow) {
+            if overlayOpen { return .handled }
+            moveSelection(1); return .handled
+        }
         .onKeyPress(.return, phases: .down) { press in
+            if previewItem != nil { previewItem = nil; return .handled }
+            if overlayOpen { return .handled }
             pasteSelected(plainText: press.modifiers.contains(.shift))
             return .handled
         }
-        .onKeyPress(.escape) { closeWithAnimation(); return .handled }
+        .onKeyPress(.escape) {
+            if previewItem != nil { previewItem = nil }
+            else if editItem != nil { editItem = nil }
+            else { closeWithAnimation() }
+            return .handled
+        }
+        .onKeyPress(.space) {
+            if searchFocused { return .ignored }
+            if previewItem != nil { previewItem = nil; return .handled }
+            if editItem == nil, let item = selectedItem { previewItem = item }
+            return .handled
+        }
+        .onKeyPress(characters: CharacterSet(charactersIn: "e"), phases: .down) { press in
+            return command(press) { if let item = selectedItem { beginEdit(item) } }
+        }
         .onKeyPress(characters: CharacterSet(charactersIn: "c"), phases: .down) { press in
             return command(press) { if let item = selectedItem { store.copy(item) } }
         }
@@ -169,6 +226,93 @@ struct HistoryPanelView: View {
         }
     }
     
+    // MARK: - Filter Strip (boards + type filter)
+
+    private var overlayOpen: Bool { previewItem != nil || editItem != nil }
+
+    private var filterStrip: some View {
+        HStack(spacing: PCTokens.Spacing.space2) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: PCTokens.Spacing.space2) {
+                    boardChip(nil, label: "全部")
+                    ForEach(store.collections, id: \.self) { c in
+                        boardChip(c, label: c)
+                    }
+                    Button { showNewBoardAlert = true } label: {
+                        Image(systemName: "plus")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(PCTokens.Color.inkSoft(dark))
+                            .padding(.horizontal, PCTokens.Spacing.space2)
+                            .padding(.vertical, PCTokens.Spacing.space1)
+                            .background(
+                                Capsule()
+                                    .fill(PCTokens.Color.card(dark))
+                                    .overlay(Capsule().stroke(PCTokens.Color.divider(dark), style: StrokeStyle(lineWidth: 1, dash: [3])))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .help("新建收藏夹")
+                }
+                .padding(.vertical, PCTokens.Spacing.space2)
+                .padding(.horizontal, PCTokens.Spacing.space4)
+            }
+
+            typeFilterMenu
+                .padding(.trailing, PCTokens.Spacing.space4)
+        }
+    }
+
+    private func boardChip(_ board: String?, label: String) -> some View {
+        let active = store.selectedCollection == board
+        return Button {
+            store.selectedCollection = (board == nil) ? nil : (active ? nil : board)
+        } label: {
+            Text(label)
+                .font(PCTokens.Font.labelSmall)
+                .lineLimit(1)
+                .foregroundColor(active ? .white : PCTokens.Color.inkSoft(dark))
+                .padding(.horizontal, PCTokens.Spacing.space3)
+                .padding(.vertical, PCTokens.Spacing.space1)
+                .background(
+                    Capsule()
+                        .fill(active ? PCTokens.Color.accent : PCTokens.Color.card(dark))
+                        .overlay(Capsule().stroke(PCTokens.Color.divider(dark), lineWidth: active ? 0 : 1))
+                )
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            if let board {
+                Button("重命名") { renameFrom = board; renameText = board }
+                Button("移除收藏夹", role: .destructive) { store.removeCollection(board) }
+            }
+        }
+    }
+
+    private static let typeFilterChoices: [(ClipboardItemType, String)] = [
+        (.text, "文本"), (.rtf, "富文本"), (.image, "图片"), (.file, "文件"), (.color, "颜色"),
+    ]
+
+    private var typeFilterMenu: some View {
+        Menu {
+            Button { store.typeFilter = nil } label: {
+                Label("全部类型", systemImage: store.typeFilter == nil ? "checkmark" : "")
+            }
+            Divider()
+            ForEach(Self.typeFilterChoices, id: \.0) { type, label in
+                Button { store.typeFilter = (store.typeFilter == type) ? nil : type } label: {
+                    Label(label, systemImage: store.typeFilter == type ? "checkmark" : "")
+                }
+            }
+        } label: {
+            Image(systemName: store.typeFilter == nil ? "line.3.horizontal.decrease.circle" : "line.3.horizontal.decrease.circle.fill")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(store.typeFilter == nil ? PCTokens.Color.inkSoft(dark) : PCTokens.Color.accent)
+                .frame(width: 28, height: 28)
+        }
+        .menuStyle(.borderlessButton)
+        .help("按类型筛选")
+    }
+
     // MARK: - History List
     
     private var historyList: some View {
@@ -183,7 +327,10 @@ struct HistoryPanelView: View {
                             isSelected: selectedItem?.id == item.id,
                             onSelect: { selectedID = item.id },
                             onPaste: { paste(item) },
-                            onPastePlain: { paste(item, plainText: true) }
+                            onPastePlain: { paste(item, plainText: true) },
+                            onPreview: { previewItem = item },
+                            onEdit: { beginEdit(item) },
+                            onJumpToHistory: { jumpToHistory(item, proxy: proxy) }
                         )
                         .id(item.id)
                         // Insert/remove is opacity-only (plan 2.3 P1); reduce motion keeps the same fade.
@@ -305,44 +452,6 @@ struct HistoryPanelView: View {
             .help("清除所有历史记录")
             
             Spacer()
-            
-            // Collection Menu
-            Menu {
-                ForEach(store.collections, id: \.self) { c in
-                    Button(action: { 
-                        store.selectedCollection = (store.selectedCollection == c) ? nil : c 
-                    }) {
-                        HStack {
-                            Text(c)
-                            if store.selectedCollection == c {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-                if store.selectedCollection != nil {
-                    Divider()
-                    Button("显示全部") { store.selectedCollection = nil }
-                }
-                if !store.collections.isEmpty {
-                    Divider()
-                    ForEach(store.collections, id: \.self) { c in
-                        Button("移除收藏 \"\(c)\"", role: .destructive) { store.removeCollection(c) }
-                    }
-                }
-            } label: {
-                Image(systemName: store.selectedCollection == nil ? "folder" : "folder.fill")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(store.selectedCollection == nil ? PCTokens.Color.inkSoft(dark) : PCTokens.Color.accent)
-                    .frame(width: 28, height: 28)
-                    .contentShape(RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous))
-                    .background(
-                        RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous)
-                            .fill(PCTokens.Color.accentSoft(dark).opacity(store.selectedCollection == nil ? 0 : 0.18))
-                    )
-            }
-            .menuStyle(.borderlessButton)
-            .help("收藏分组")
         }
         .padding(.horizontal, PCTokens.Spacing.space4)
         .padding(.vertical, PCTokens.Spacing.space3)
@@ -407,6 +516,24 @@ struct HistoryPanelView: View {
     }
     private func pasteSelected(plainText: Bool = false) { if let item = selectedItem { paste(item, plainText: plainText) } }
 
+    /// Jump to History：从搜索结果跳回该条目在未筛选时间线中的原位置
+    private func jumpToHistory(_ item: ClipboardItem, proxy: ScrollViewProxy) {
+        store.searchText = ""
+        store.typeFilter = nil
+        store.selectedCollection = nil
+        if selectedID == item.id {
+            proxy.scrollTo(item.id, anchor: .center)
+        } else {
+            selectedID = item.id // onChange(selectedID) 负责滚动
+        }
+    }
+
+    private func beginEdit(_ item: ClipboardItem) {
+        guard item.type == .text else { return }
+        editText = item.textContent ?? ""
+        editItem = item
+    }
+
     private func paste(_ item: ClipboardItem, plainText: Bool = false) {
         logger.debug("面板粘贴操作: \(item.displayText.prefix(50), privacy: .private) (ID: \(item.id.uuidString.prefix(8), privacy: .public))")
         closeWithAnimation()
@@ -429,6 +556,173 @@ struct HistoryPanelView: View {
         if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
             NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
         }
+    }
+}
+
+// MARK: - Quick Preview Overlay (Space)
+
+private struct PreviewOverlay: View {
+    let item: ClipboardItem
+    let onClose: () -> Void
+    private var dark: Bool { PCTheme.isDark() }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.25)
+                .onTapGesture { onClose() }
+            VStack(alignment: .leading, spacing: PCTokens.Spacing.space3) {
+                HStack {
+                    Text(item.typeLabel)
+                        .font(PCTokens.Font.headingSmall)
+                        .foregroundColor(PCTokens.Color.ink(dark))
+                    Spacer()
+                    Button(action: onClose) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(PCTokens.Color.inkMuted(dark))
+                    }
+                    .buttonStyle(PCButtonStyle())
+                }
+                content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .padding(PCTokens.Spacing.space4)
+            .frame(width: 340, height: 400)
+            .background(
+                RoundedRectangle(cornerRadius: PCTokens.Radius.r6, style: .continuous)
+                    .fill(PCTokens.Color.panel(dark))
+                    .shadow(PCTokens.Shadow.level3)
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch item.type {
+        case .image:
+            if let img = item.previewImage {
+                Image(nsImage: img)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                Text("无法预览图片")
+                    .font(PCTokens.Font.bodySmall)
+                    .foregroundColor(PCTokens.Color.inkMuted(dark))
+            }
+        case .file:
+            ScrollView {
+                VStack(alignment: .leading, spacing: PCTokens.Spacing.space2) {
+                    ForEach(item.fileURLs ?? [], id: \.self) { url in
+                        Text(url.path)
+                            .font(PCTokens.Font.bodySmall)
+                            .foregroundColor(PCTokens.Color.ink(dark))
+                            .textSelection(.enabled)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        case .color:
+            colorContent
+        default:
+            ScrollView {
+                Text(item.displayText)
+                    .font(PCTokens.Font.bodyMedium)
+                    .foregroundColor(PCTokens.Color.ink(dark))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var colorContent: some View {
+        if let d = item.colorData,
+           let nsColor = try? NSKeyedUnarchiver.unarchivedObject(ofClass: NSColor.self, from: d),
+           let srgb = nsColor.usingColorSpace(.sRGB) {
+            let hex = String(format: "#%02X%02X%02X",
+                             Int((srgb.redComponent * 255).rounded()),
+                             Int((srgb.greenComponent * 255).rounded()),
+                             Int((srgb.blueComponent * 255).rounded()))
+            VStack(spacing: PCTokens.Spacing.space4) {
+                RoundedRectangle(cornerRadius: PCTokens.Radius.r4, style: .continuous)
+                    .fill(Color(nsColor: srgb))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: PCTokens.Radius.r4, style: .continuous)
+                            .stroke(PCTokens.Color.divider(dark), lineWidth: 1)
+                    )
+                Button {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(hex, forType: .string)
+                } label: {
+                    Text(hex)
+                        .font(PCTokens.Font.monoSmall)
+                        .foregroundColor(PCTokens.Color.ink(dark))
+                        .padding(.horizontal, PCTokens.Spacing.space3)
+                        .padding(.vertical, PCTokens.Spacing.space1)
+                        .background(
+                            Capsule()
+                                .fill(PCTokens.Color.card(dark))
+                                .overlay(Capsule().stroke(PCTokens.Color.divider(dark), lineWidth: 1))
+                        )
+                }
+                .buttonStyle(.plain)
+                .help("点击复制 HEX")
+            }
+        } else {
+            Text("无法读取颜色")
+                .font(PCTokens.Font.bodySmall)
+                .foregroundColor(PCTokens.Color.inkMuted(dark))
+        }
+    }
+}
+
+// MARK: - Edit Overlay (⌘E, text items)
+
+private struct EditOverlay: View {
+    @Binding var text: String
+    let onSave: () -> Void
+    let onCancel: () -> Void
+    @FocusState private var editorFocused: Bool
+    private var dark: Bool { PCTheme.isDark() }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.25)
+                .onTapGesture { onCancel() }
+            VStack(alignment: .leading, spacing: PCTokens.Spacing.space3) {
+                Text("编辑文本")
+                    .font(PCTokens.Font.headingSmall)
+                    .foregroundColor(PCTokens.Color.ink(dark))
+                TextEditor(text: $text)
+                    .font(PCTokens.Font.bodyMedium)
+                    .focused($editorFocused)
+                    .scrollContentBackground(.hidden)
+                    .padding(PCTokens.Spacing.space2)
+                    .background(
+                        RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous)
+                            .fill(PCTokens.Color.card(dark))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: PCTokens.Radius.r2, style: .continuous)
+                                    .stroke(PCTokens.Color.divider(dark), lineWidth: 1)
+                            )
+                    )
+                HStack {
+                    Spacer()
+                    Button("取消", action: onCancel)
+                        .keyboardShortcut(.cancelAction)
+                    Button("保存", action: onSave)
+                        .keyboardShortcut(.return, modifiers: .command)
+                }
+            }
+            .padding(PCTokens.Spacing.space4)
+            .frame(width: 340, height: 400)
+            .background(
+                RoundedRectangle(cornerRadius: PCTokens.Radius.r6, style: .continuous)
+                    .fill(PCTokens.Color.panel(dark))
+                    .shadow(PCTokens.Shadow.level3)
+            )
+        }
+        .onAppear { editorFocused = true }
     }
 }
 

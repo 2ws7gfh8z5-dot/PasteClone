@@ -28,4 +28,12 @@ final class ClipboardStoreTests: XCTestCase {
         let recovered = ClipboardStore.recover(from: data)
         XCTAssertEqual(recovered.map(\.textContent), ["hello"])
     }
+
+    func testOrderedCollectionsKeepsRegisteredOrderThenAlphabetical() {
+        let result = ClipboardStore.orderedCollections(
+            present: ["工作", "代码", "临时"],
+            order: ["代码", "工作"]
+        )
+        XCTAssertEqual(result, ["代码", "工作", "临时"])
+    }
 }

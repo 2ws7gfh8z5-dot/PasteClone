@@ -9,6 +9,9 @@ struct HistoryRow: View {
     var onSelect: () -> Void = {}
     var onPaste: () -> Void = {}
     var onPastePlain: () -> Void = {}
+    var onPreview: () -> Void = {}
+    var onEdit: () -> Void = {}
+    var onJumpToHistory: () -> Void = {}
 
     @State private var hovering = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -256,6 +259,11 @@ struct HistoryRow: View {
     private var contextMenu: some View {
         Button("粘贴") { onPaste() }
         Button("纯文本粘贴") { onPastePlain() }
+        Button("快速预览") { onPreview() }
+        if item.type == .text {
+            Button("编辑") { onEdit() }
+        }
+        Button("在历史中显示") { onJumpToHistory() }
         Button(item.isPinned ? "取消固定" : "固定") { withAnimation(reorderAnimation) { store.togglePin(item) } }
         Button("加入粘贴队列") { store.pushStack(item) }
         Menu("收藏到") {
