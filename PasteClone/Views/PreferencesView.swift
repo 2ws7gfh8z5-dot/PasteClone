@@ -14,6 +14,7 @@ struct PreferencesView: View {
     @AppStorage("donationURL") private var donationURL = "https://github.com/2ws7gfh8z5-dot/PasteClone#支持开发"
     @AppStorage(PCTheme.modeKey) private var appearanceMode = PCTheme.Mode.automatic.rawValue
     @AppStorage("profileAnalysisEnabled") private var profileEnabled = false
+    @State private var mcpOn = MCPServer.isEnabled
     @ObservedObject private var analyzer = ProfileAnalyzer.shared
     @State private var excludedBundleIDs = PrivacyRules.excludedBundleIDs
     @State private var privacyStatus = ""
@@ -166,9 +167,10 @@ struct PreferencesView: View {
                     Text("500").tag(500)
                     Text("1000").tag(1000)
                     Text("2000").tag(2000)
+                    Text("无限制").tag(0)
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 260)
+                .frame(width: 300)
                 .labelsHidden()
             }
 
@@ -434,6 +436,42 @@ struct PreferencesView: View {
             }
             .animation(PCTokens.Motion.resolve(PCTokens.Motion.enter, reduced: reduceMotion), value: excludedBundleIDs)
             .animation(PCTokens.Motion.resolve(PCTokens.Motion.enter, reduced: reduceMotion), value: privacyStatus)
+
+            Divider().background(PCTokens.Color.divider(dark))
+
+            SettingsRow(
+                icon: "network",
+                title: "本地 MCP 服务",
+                subtitle: "允许本机 AI 工具（Claude、Codex 等）只读访问剪贴板历史与收藏夹。仅监听 127.0.0.1，需令牌鉴权。",
+                dark: dark
+            ) {
+                Toggle("", isOn: $mcpOn)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .onChange(of: mcpOn) { _, on in MCPServer.isEnabled = on }
+            }
+
+            if mcpOn {
+                VStack(alignment: .leading, spacing: PCTokens.Spacing.space2) {
+                    Text("地址：http://127.0.0.1:\(MCPServer.port)/mcp")
+                        .font(PCTokens.Font.monoSmall)
+                        .foregroundColor(PCTokens.Color.ink(dark))
+                        .textSelection(.enabled)
+                    Text("令牌：\(MCPServer.token)")
+                        .font(PCTokens.Font.monoSmall)
+                        .foregroundColor(PCTokens.Color.inkMuted(dark))
+                        .textSelection(.enabled)
+                    Button("复制 MCP 客户端配置") {
+                        let config = """
+                        { "mcpServers": { "just-paste": { "type": "http", "url": "http://127.0.0.1:\(MCPServer.port)/mcp", "headers": { "Authorization": "Bearer \(MCPServer.token)" } } } }
+                        """
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(config, forType: .string)
+                    }
+                    .buttonStyle(PCButtonStyle())
+                }
+                .padding(.leading, PCTokens.Spacing.space7)
+            }
         }
     }
     

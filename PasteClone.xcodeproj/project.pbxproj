@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00833827F41533C12FE6BCC6 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C717F7BFA847E23FB761C5F /* Theme.swift */; };
+		2200AF627AE4081EA79CD5EC /* MCPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA5E47696B270A0A86920AC3 /* MCPServer.swift */; };
 		332127B012D7F1422541E76C /* GitHubProfileUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E2C5F02DD823180CD2A6AF /* GitHubProfileUpdater.swift */; };
 		3EF3DB7C5D5ED1997FF88663 /* ClipboardIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D2DC87C73FA58340631005E /* ClipboardIntents.swift */; };
 		49837AB99CAA3C3BBFBFD3D6 /* ProfileAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 731BDE7B9FDBC70AAE47D55C /* ProfileAnalyzer.swift */; };
@@ -56,6 +57,7 @@
 		83EBAE930484B45A2C53C293 /* ClipboardStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStoreTests.swift; sourceTree = "<group>"; };
 		A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyConfiguration.swift; sourceTree = "<group>"; };
 		A3C1CA9AC18F0435A7808AEE /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
+		CA5E47696B270A0A86920AC3 /* MCPServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServer.swift; sourceTree = "<group>"; };
 		DAF8A888CD900B05A484938D /* ClipboardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardStore.swift; sourceTree = "<group>"; };
 		E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		EEFBB54BC6E393DA74F928E3 /* PasteClone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PasteClone.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -127,6 +129,7 @@
 				48E2C5F02DD823180CD2A6AF /* GitHubProfileUpdater.swift */,
 				A25DAEB33721A0256FFA756E /* HotkeyConfiguration.swift */,
 				E5FC0D447E1BFB4284D37BCB /* HotkeyManager.swift */,
+				CA5E47696B270A0A86920AC3 /* MCPServer.swift */,
 				6A9F68B2781A998BF1B9D024 /* PrivacyRules.swift */,
 				731BDE7B9FDBC70AAE47D55C /* ProfileAnalyzer.swift */,
 			);
@@ -258,6 +261,7 @@
 				BFC542849E58F1B1D7B11E83 /* HotkeyConfiguration.swift in Sources */,
 				8E29848A6863AC4E5651DB5D /* HotkeyManager.swift in Sources */,
 				D51407AC8B6D6761FBB858B7 /* HotkeyRecorder.swift in Sources */,
+				2200AF627AE4081EA79CD5EC /* MCPServer.swift in Sources */,
 				B5DF6B62D30C3B1B8B021E65 /* PasteCloneApp.swift in Sources */,
 				E8807ED80CF7B3804446A71C /* PreferencesView.swift in Sources */,
 				8E97539886B8C6A311F47C7C /* PrivacyRules.swift in Sources */,

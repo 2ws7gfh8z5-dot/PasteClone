@@ -36,4 +36,15 @@ final class ClipboardStoreTests: XCTestCase {
         )
         XCTAssertEqual(result, ["代码", "工作", "临时"])
     }
+
+    func testSuggestPrefersPinnedAndTargetApp() {
+        let fresh = ClipboardItem(type: .text, textContent: "fresh")
+        let pinned = ClipboardItem(type: .text, textContent: "pinned", isPinned: true)
+        let matched = ClipboardItem(type: .text, textContent: "matched", sourceAppBundleID: "com.x")
+        // items[0] 是最新复制（已在剪贴板上），永不建议
+        XCTAssertEqual(ClipboardStore.suggest(items: [fresh, matched], targetBundleID: "com.x")?.textContent, "matched")
+        XCTAssertEqual(ClipboardStore.suggest(items: [fresh, pinned], targetBundleID: nil)?.textContent, "pinned")
+        XCTAssertNil(ClipboardStore.suggest(items: [fresh, matched], targetBundleID: "com.other"))
+        XCTAssertNil(ClipboardStore.suggest(items: [fresh], targetBundleID: nil))
+    }
 }

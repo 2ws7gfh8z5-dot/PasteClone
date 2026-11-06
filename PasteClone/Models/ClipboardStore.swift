@@ -109,8 +109,11 @@ class ClipboardStore: ObservableObject {
             items.insert(item, at: 0)
         }
         let configuredLimit = UserDefaults.standard.object(forKey: "maxItems") as? Int ?? 1000
-        let limit = max(100, configuredLimit)
-        items = Self.trimmed(Self.pruned(items, retentionDays: UserDefaults.standard.integer(forKey: "retentionDays")), limit: limit)
+        if configuredLimit > 0 {
+            items = Self.trimmed(Self.pruned(items, retentionDays: UserDefaults.standard.integer(forKey: "retentionDays")), limit: max(100, configuredLimit))
+        } else {
+            items = Self.pruned(items, retentionDays: UserDefaults.standard.integer(forKey: "retentionDays"))
+        }
         save()
         if item.type == .image, let data = item.imageData {
             let id = item.id
@@ -342,12 +345,32 @@ class ClipboardStore: ObservableObject {
         return added.count
     }
 
+    private let saveQueue = DispatchQueue(label: "com.you.justpaste.save", qos: .utility)
+    private var saveWorkItem: DispatchWorkItem?
+
+    /// 防抖落盘：0.5s 合并高频变更，主线程只取快照；退出前必须 flushSave()
     private func save() {
-        do {
-            let data = try JSONEncoder().encode(items)
-            try data.write(to: saveURL, options: .atomic)
-        } catch {
-            NSLog("PasteClone could not save history: %@", error.localizedDescription)
+        let snapshot = items
+        saveWorkItem?.cancel()
+        let work = DispatchWorkItem { [saveURL] in
+            do {
+                let data = try JSONEncoder().encode(snapshot)
+                try data.write(to: saveURL, options: .atomic)
+            } catch {
+                NSLog("PasteClone could not save history: %@", error.localizedDescription)
+            }
+        }
+        saveWorkItem = work
+        saveQueue.asyncAfter(deadline: .now() + 0.5, execute: work)
+    }
+
+    /// 立即落盘（应用退出前调用）
+    func flushSave() {
+        saveWorkItem?.cancel()
+        saveWorkItem = nil
+        saveQueue.sync {
+            guard let data = try? JSONEncoder().encode(items) else { return }
+            try? data.write(to: saveURL, options: .atomic)
         }
     }
 

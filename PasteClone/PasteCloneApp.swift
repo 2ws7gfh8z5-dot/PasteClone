@@ -36,10 +36,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if UserDefaults.standard.object(forKey: "hotkeyEnabled") as? Bool ?? true {
             HotkeyManager.shared.register()
         }
+        MCPServer.shared.store = store
+        if UserDefaults.standard.bool(forKey: "mcpEnabled") { MCPServer.shared.start() }
     }
-    
+
     func applicationWillTerminate(_ notification: Notification) {
         HotkeyManager.shared.unregister()
+        MCPServer.shared.stop()
+        store.flushSave()
     }
     
     func togglePanel() {
