@@ -24,81 +24,83 @@
 ### 构建验证
 - [ ] Debug 构建成功
 - [ ] Release 构建成功
-- [ ] 代码签名有效
-- [ ] 应用能正常启动
+- [ ] `scripts/build_dmg.sh` 正常产出 DMG 与 ZIP
+- [ ] 应用能正常启动（未签名，首次打开需右键 →「打开」）
 - [ ] 菜单栏正常显示
 
 ### 文档检查
 - [ ] README 最新
+- [ ] 下载链接指向 `releases/latest`，不写死版本号
 - [ ] MANUAL.md 完整
-- [ ] SHORTCUTS.md 准确
+- [ ] KEYBOARD_SHORTCUTS.md 准确
 - [ ] FEATURES.md 详细
 - [ ] QUICK_OVERVIEW.md 简洁
+- [ ] CHANGELOG.md 顶部已加入本版本条目
 
 ## 2. 构建发布版本
 
+macOS 安装包由 `scripts/build_dmg.sh` 一键产出（Universal：arm64 + x86_64）：
+
 ```bash
-# 清理旧构建
-xcodebuild clean -project PasteClone.xcodeproj -scheme PasteClone
-
-# 构建 Release 版本
-xcodebuild build -project PasteClone.xcodeproj \
-  -scheme PasteClone \
-  -configuration Release \
-  -sdk macosx \
-  CODE_SIGNING_ALLOWED=NO
-
-# 打包
-cd build
-rm -f PasteClone-1.0.0.zip
-ditto -c -k --sequesterRsrc PasteClone.app PasteClone-1.0.0.zip
-ls -lh PasteClone-1.0.0.zip
+# 版本号从环境变量读取，省略时用脚本里的默认值
+VERSION=1.8.1 bash scripts/build_dmg.sh
 ```
+
+脚本会编译 Release 版本并输出两个文件到 `dist/`：
+
+- `dist/JustPaste-1.8.1-macos-universal.dmg`
+- `dist/JustPaste-1.8.1-macos-universal.zip`
+
+Windows 包不本地构建，由 CI 产出（见第 3 节）。`.github/workflows/macos.yml` 只在 push 和 PR 时验证 macOS 能编译通过并跑模糊搜索自检，不产出发布资产。
 
 ## 3. 上传到 GitHub Releases
 
 ### 使用 GitHub CLI (gh)
 
+`scripts/github_release.sh` 会自动从 `CHANGELOG.md` 摘出对应版本段落作为发布说明：
+
 ```bash
 # 检查 gh 是否已认证
 gh auth status
 
-# 创建 Release
-gh release create v1.0.0 \
-  -t "PasteClone v1.0.0" \
-  -F RELEASE_NOTES.md \
-  build/PasteClone-1.0.0.zip
-
-# 如果已存在相同版本，删除后重建
-gh release delete v1.0.0 -y
-gh release create v1.0.0 ...
+# 创建 Release（v1.8.1），上传 dist/ 下的 DMG 与 ZIP
+bash scripts/github_release.sh 1.8.1
 ```
+
+Windows 资产由 CI 上传：`.github/workflows/cross-platform.yml` 在推送 `v*` 标签时构建并附上 `PasteClone-Windows-x86_64.zip`。因此**先推标签，再让 CI 补上 Windows 包**，或先用 `gh` 建 Release 再推标签。
 
 ### 使用 GitHub Web 界面
 
 1. 访问 https://github.com/2ws7gfh8z5-dot/PasteClone/releases
 2. 点击"Draft a new release"
-3. 填入版本号：`v1.0.0`
-4. 填入标题：`PasteClone v1.0.0`
+3. 填入 tag：`v1.8.1`
+4. 填入标题：`PasteClone v1.8.1`
 5. 粘贴发布说明（见下方）
-6. 上传文件：`build/PasteClone-1.0.0.zip`
+6. 上传文件：`dist/JustPaste-1.8.1-macos-universal.dmg` 与 `.zip`
 7. 点击"Publish release"
+
+> Linux 自 1.8.0 起暂停发布，不要为 Linux 添加构建步骤或资产。
 
 ### 发布说明模板
 
 ```markdown
-# 🎉 PasteClone v1.0.0
+# 🎉 PasteClone v1.8.1
 
 一款原生 macOS 剪贴板历史管理器，自动记录复制过的内容并通过全局快捷键快速搜索、预览和粘贴。
+
+## 📦 下载
+
+- **macOS**：`JustPaste-1.8.1-macos-universal.dmg`（Apple Silicon + Intel 通用）
+- **Windows**：`PasteClone-Windows-x86_64.zip`（纯文本客户端，由 CI 构建）
+- **Linux**：自 1.8.0 起暂停更新，不提供新构建
 
 ## ✨ 主要功能
 
 - **自动记录**：后台记录文本、图片、文件、富文本、颜色内容
 - **全局快捷键**：`⇧⌘V` 快速呼出历史面板（可自定义）
-- **快速搜索**：实时模糊搜索，支持按应用来源筛选
+- **快速搜索**：子序列模糊搜索，数字键 `1`–`9` 直接粘贴对应行
 - **收藏固定**：用 `⌘P` 标记重要内容
 - **粘贴队列**：连续粘贴多个历史项
-- **自动应用**：一键将内容粘贴到活跃应用
 - **本地存储**：JSON 文件保存，完全离线，不上传数据
 
 ## 🔧 快捷键
@@ -106,23 +108,23 @@ gh release create v1.0.0 ...
 | 快捷键 | 功能 |
 |-------|------|
 | `⇧⌘V` | 呼出历史面板 |
+| `1`–`9` | 直接粘贴第 1–9 行 |
 | `⌘C` | 复制选中项 |
 | `⌘V` | 粘贴选中项 |
 | `⌘P` | 固定/取消固定 |
-| `Delete` | 删除选中项 |
-| `⌘1-9` | 快速选择 1-9 位置 |
+| `⌘⌫` | 删除选中项 |
+| `⌘1`–`⌘9` | 快速选择 1–9 位置 |
 | `Esc` | 关闭面板 |
 
 ## 📋 系统要求
 
 - macOS 14 Sonoma 或更高
 - Apple Silicon / Intel Mac
-- 2 GB 磁盘空间
 
 ## 📚 文档
 
 - [详细使用说明](MANUAL.md)
-- [快捷键完整列表](SHORTCUTS.md)
+- [快捷键完整列表](KEYBOARD_SHORTCUTS.md)
 - [功能速览](QUICK_OVERVIEW.md)
 
 ## 📧 反馈
@@ -158,11 +160,13 @@ gh release create v1.0.0 ...
 
 ```bash
 git add -A
-git commit -m "release: v1.0.0 with icon updates and documentation"
+git commit -m "release: v1.8.1"
 git push origin main
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.8.1
+git push origin v1.8.1
 ```
+
+推标签后 CI 会自动构建 Windows 包并附到该 Release 上。
 
 ## 5. 宣传渠道（可选）
 
@@ -225,6 +229,7 @@ git push origin v1.0.0
 
 ---
 
-**更新日期**：2026-08-26
+**更新日期**：2026-10-29
+**当前版本**：1.8.1
 **维护者**：huaziyi
 **联系方式**：15665874885@163.com

@@ -1,0 +1,25 @@
+name: macOS app
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: macOS app — macos-14
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      # project.pbxproj is objectVersion 77, which needs Xcode 16+.
+      - name: Select latest Xcode
+        run: |
+          if latest=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1) && [ -n "$latest" ]; then
+            sudo xcode-select -s "$latest"
+          fi
+          xcodebuild -version
+      - name: Build
+        run: xcodebuild -project PasteClone.xcodeproj -scheme PasteClone -configuration Debug build CODE_SIGNING_ALLOWED=NO
+      - name: Fuzzy search self-check
+        run: swift Tests/fuzzy_check.swift

@@ -20,6 +20,7 @@ targets:
       - path: PasteClone/Models
       - path: PasteClone/Views
       - path: PasteClone/Services
+      - path: PasteClone/Intents
       - path: PasteClone/PasteCloneApp.swift
       - path: PasteClone/Resources/Assets.xcassets
     settings:
@@ -36,8 +37,8 @@ targets:
       properties:
         CFBundleName: "Just Paste"
         CFBundleDisplayName: "Just Paste"
-        CFBundleShortVersionString: "1.7.2"
-        CFBundleVersion: "15"
+        CFBundleShortVersionString: "1.10.0"
+        CFBundleVersion: "19"
         LSMinimumSystemVersion: "14.0"
         LSUIElement: true
         NSHumanReadableCopyright: "Copyright 2024. All rights reserved."

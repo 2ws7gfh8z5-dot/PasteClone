@@ -27,12 +27,36 @@ class ClipboardStore: ObservableObject {
         }
         let pinned = list.filter(\.isPinned)
         let rest   = list.filter { !$0.isPinned }
-        let ordered = pinned + rest
-        guard !searchText.isEmpty else { return ordered }
-        return ordered.filter { item in
-            item.displayText.localizedCaseInsensitiveContains(searchText) ||
-            (item.sourceAppName ?? "").localizedCaseInsensitiveContains(searchText)
+        guard !searchText.isEmpty else { return pinned + rest }
+        func ranked(_ group: [ClipboardItem]) -> [ClipboardItem] {
+            group.compactMap { item -> (ClipboardItem, Int)? in
+                let scores = [Self.fuzzyScore(searchText, item.displayText),
+                              item.sourceAppName.flatMap { Self.fuzzyScore(searchText, $0) }]
+                guard let best = scores.compactMap({ $0 }).max() else { return nil }
+                return (item, best)
+            }
+            .sorted { $0.1 > $1.1 }
+            .map(\.0)
         }
+        return ranked(pinned) + ranked(rest)
+    }
+
+    /// 子序列模糊匹配；query 为空时返回 0（全部匹配），不匹配返回 nil。
+    static func fuzzyScore(_ query: String, _ text: String) -> Int? {
+        if query.isEmpty { return 0 }
+        let q = Array(query.lowercased()), t = Array(text.lowercased())
+        var score = 0, ti = 0
+        for (qi, ch) in q.enumerated() {
+            var gap = 0
+            while ti < t.count && t[ti] != ch { gap += 1; ti += 1 }
+            guard ti < t.count else { return nil }
+            score += 1 - gap                                  // 命中 +1，相隔越远扣得越多
+            if qi > 0 && ti > 0 && t[ti - 1] == q[qi - 1] { score += 3 }   // 连续命中
+            if ti == 0 || (!t[ti - 1].isLetter && !t[ti - 1].isNumber) { score += 5 }  // 词首命中
+            if qi == 0 { score += max(0, 5 - ti) }            // 首次命中越靠前越好
+            ti += 1
+        }
+        return score
     }
 
     init() {
@@ -41,6 +65,7 @@ class ClipboardStore: ObservableObject {
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         saveURL = dir.appendingPathComponent("history.json")
         load()
+        items = Self.pruned(items, retentionDays: UserDefaults.standard.integer(forKey: "retentionDays"))
 
         monitor.onChange = { [weak self] changeCount, item in
             guard let self else { return }
@@ -52,9 +77,11 @@ class ClipboardStore: ObservableObject {
             DispatchQueue.main.async { self.add(item) }
         }
         monitor.start()
+        ProfileAnalyzer.shared.analyzeIfStale()
     }
 
     private func add(_ item: ClipboardItem) {
+        ProfileAnalyzer.shared.record(item)
         if let pinnedIndex = items.firstIndex(where: { $0.contentHash == item.contentHash && $0.isPinned }) {
             let pinned = items.remove(at: pinnedIndex)
             items.removeAll { $0.contentHash == item.contentHash }
@@ -65,13 +92,17 @@ class ClipboardStore: ObservableObject {
         }
         let configuredLimit = UserDefaults.standard.object(forKey: "maxItems") as? Int ?? 1000
         let limit = max(100, configuredLimit)
-        items = Self.trimmed(items, limit: limit)
+        items = Self.trimmed(Self.pruned(items, retentionDays: UserDefaults.standard.integer(forKey: "retentionDays")), limit: limit)
         save()
     }
 
-    func paste(_ item: ClipboardItem, synthesizeKeypress: Bool = true) {
-        logger.debug("请求粘贴: \(item.displayText.prefix(50), privacy: .public) (类型: \(String(describing: item.type), privacy: .public))")
-        writeToPasteboard(item)
+    func addText(_ text: String) {
+        add(ClipboardItem(type: .text, textContent: text))
+    }
+
+    func paste(_ item: ClipboardItem, plainText: Bool = false, synthesizeKeypress: Bool = true) {
+        logger.debug("请求粘贴: \(item.displayText.prefix(50), privacy: .private) (类型: \(String(describing: item.type), privacy: .public))")
+        writeToPasteboard(item, plainText: plainText)
         if synthesizeKeypress {
             // 统一使用 0.18s 延迟，与 HistoryPanelView 保持一致
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
@@ -84,9 +115,14 @@ class ClipboardStore: ObservableObject {
         writeToPasteboard(item)
     }
 
-    private func writeToPasteboard(_ item: ClipboardItem) {
+    private func writeToPasteboard(_ item: ClipboardItem, plainText: Bool = false) {
         let pb = NSPasteboard.general
         pb.clearContents()
+        if plainText, item.type == .text || item.type == .rtf {
+            pb.setString(item.displayText, forType: .string)
+            suppressedChangeCount = pb.changeCount
+            return
+        }
         logger.debug("写入剪贴板: 类型=\(String(describing: item.type), privacy: .public)")
         switch item.type {
         case .text:
@@ -97,6 +133,7 @@ class ClipboardStore: ObservableObject {
             if let d = item.rtfData {
                 let typeStr = item.richTextType ?? NSPasteboard.PasteboardType.rtf.rawValue
                 pb.setData(d, forType: NSPasteboard.PasteboardType(typeStr))
+                pb.setString(item.displayText, forType: .string) // ponytail: plain fallback for apps that ignore RTF
                 logger.debug("写入 RTF: \(d.count, privacy: .public) 字节, 类型=\(typeStr, privacy: .public)")
             }
         case .image:
@@ -121,6 +158,12 @@ class ClipboardStore: ObservableObject {
         }
         suppressedChangeCount = pb.changeCount
         logger.debug("剪贴板写入完成, changeCount=\(pb.changeCount, privacy: .public)")
+    }
+
+    static func pruned(_ items: [ClipboardItem], retentionDays: Int, now: Date = Date()) -> [ClipboardItem] {
+        guard retentionDays > 0 else { return items }
+        let cutoff = now.addingTimeInterval(-Double(retentionDays) * 86_400)
+        return items.filter { $0.isPinned || $0.timestamp >= cutoff }
     }
 
     static func trimmed(_ items: [ClipboardItem], limit: Int) -> [ClipboardItem] {
@@ -186,6 +229,22 @@ class ClipboardStore: ObservableObject {
         let item = pasteStack.removeFirst()
         paste(item)
         return item
+    }
+
+    func exportHistory(to url: URL) throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        try encoder.encode(items).write(to: url, options: .atomic)
+    }
+
+    /// 按 contentHash 合并，已存在的保留本地版本；返回实际新增条数。
+    func importHistory(from url: URL) throws -> Int {
+        let imported = try JSONDecoder().decode([ClipboardItem].self, from: Data(contentsOf: url))
+        var existing = Set(items.map(\.contentHash))
+        let added = imported.filter { existing.insert($0.contentHash).inserted }
+        items += added
+        save()
+        return added.count
     }
 
     private func save() {

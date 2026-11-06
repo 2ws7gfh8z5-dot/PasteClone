@@ -1,16 +1,20 @@
 import SwiftUI
 import ServiceManagement
 import AppKit
+import UniformTypeIdentifiers
 
 struct PreferencesView: View {
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("maxItems") private var maxItems = 1000
+    @AppStorage("retentionDays") private var retentionDays = 0
     @AppStorage("hotkeyEnabled") private var hotkeyEnabled = true
     @AppStorage("hotkeyPreset") private var hotkeyPreset = HotkeyPreset.shiftCommandV.rawValue
     @AppStorage("customHotkeyKeyCode") private var customKeyCode = 0
     @AppStorage("customHotkeyModifiers") private var customModifiers = 0
     @AppStorage("donationURL") private var donationURL = "https://github.com/2ws7gfh8z5-dot/PasteClone#支持开发"
     @AppStorage(PCTheme.modeKey) private var appearanceMode = PCTheme.Mode.automatic.rawValue
+    @AppStorage("profileAnalysisEnabled") private var profileEnabled = false
+    @ObservedObject private var analyzer = ProfileAnalyzer.shared
     @State private var excludedBundleIDs = PrivacyRules.excludedBundleIDs
     @State private var privacyStatus = ""
     @State private var showPrivacyDetail = false
@@ -24,8 +28,9 @@ struct PreferencesView: View {
         case hotkeys = "快捷键"
         case appearance = "外观"
         case privacy = "隐私"
+        case profile = "画像"
         case about = "关于"
-        
+
         var id: String { rawValue }
         var icon: String {
             switch self {
@@ -33,6 +38,7 @@ struct PreferencesView: View {
             case .hotkeys: return "command"
             case .appearance: return "paintbrush"
             case .privacy: return "lock.shield"
+            case .profile: return "person.crop.circle"
             case .about: return "info.circle"
             }
         }
@@ -117,6 +123,8 @@ struct PreferencesView: View {
             appearanceSection
         case .privacy:
             privacySection
+        case .profile:
+            profileSection
         case .about:
             aboutSection
         }
@@ -162,6 +170,34 @@ struct PreferencesView: View {
                 .pickerStyle(.segmented)
                 .frame(width: 260)
                 .labelsHidden()
+            }
+
+            Divider().background(PCTokens.Color.divider(dark))
+
+            SettingsRow(
+                icon: "calendar",
+                title: "保留时长",
+                subtitle: "超过后自动删除非固定条目，固定条目不受影响",
+                dark: dark
+            ) {
+                Picker("", selection: $retentionDays) {
+                    Text("永久").tag(0)
+                    Text("7 天").tag(7)
+                    Text("30 天").tag(30)
+                    Text("90 天").tag(90)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 260)
+                .labelsHidden()
+            }
+
+            Divider().background(PCTokens.Color.divider(dark))
+
+            HStack(spacing: PCTokens.Spacing.space3) {
+                Button("导出历史...") { exportHistory() }
+                    .buttonStyle(PCButtonStyle())
+                Button("导入历史...") { importHistory() }
+                    .buttonStyle(PCButtonStyle())
             }
         }
     }
@@ -401,6 +437,69 @@ struct PreferencesView: View {
         }
     }
     
+    private var profileSection: some View {
+        VStack(alignment: .leading, spacing: PCTokens.Spacing.space5) {
+            SettingsRow(
+                icon: "brain",
+                title: "本地画像分析",
+                subtitle: "用系统自带的 NaturalLanguage 在后台分析复制内容，推断职业与偏好。完全本地运行，不发送任何数据。",
+                dark: dark
+            ) {
+                Toggle("", isOn: $profileEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .onChange(of: profileEnabled) { _, on in
+                        ProfileAnalyzer.isEnabled = on
+                        if on { ProfileAnalyzer.shared.analyzeIfStale() } else { ProfileAnalyzer.shared.clear() }
+                    }
+            }
+
+            Divider().background(PCTokens.Color.divider(dark))
+
+            if let p = analyzer.profile {
+                VStack(alignment: .leading, spacing: PCTokens.Spacing.space3) {
+                    Text("推断职业：\(p.occupation)")
+                        .font(PCTokens.Font.bodyMedium)
+                        .foregroundColor(PCTokens.Color.ink(dark))
+                    Text("置信度 \(Int(p.confidence * 100))%　·　共分析 \(p.apps.values.reduce(0, +)) 条")
+                        .font(PCTokens.Font.labelXSmall)
+                        .foregroundColor(PCTokens.Color.inkMuted(dark))
+                    if !p.interests.isEmpty {
+                        Text("高频词：\(p.interests.joined(separator: "、"))")
+                            .font(PCTokens.Font.labelXSmall)
+                            .foregroundColor(PCTokens.Color.inkMuted(dark))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Text("更新于 \(p.generatedAt.formatted(date: .abbreviated, time: .shortened))")
+                        .font(PCTokens.Font.labelXSmall)
+                        .foregroundColor(PCTokens.Color.inkMuted(dark))
+                }
+                .padding(.leading, PCTokens.Spacing.space7)
+            } else {
+                Text(profileEnabled ? "还没有足够的样本。累计 20 条以上文本后会自动分析，每天最多一次。"
+                                    : "未开启。开启后只记录来源 App、语言、时段等统计量，不保存剪贴板原文。")
+                    .font(PCTokens.Font.bodySmall)
+                    .foregroundColor(PCTokens.Color.inkMuted(dark))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, PCTokens.Spacing.space7)
+            }
+
+            HStack(spacing: PCTokens.Spacing.space3) {
+                Button("立即分析") { ProfileAnalyzer.shared.analyze() }
+                    .buttonStyle(PCButtonStyle())
+                    .disabled(!profileEnabled)
+                Button("删除我的画像") {
+                    ProfileAnalyzer.shared.clear()
+                    profileEnabled = false
+                    ProfileAnalyzer.isEnabled = false
+                }
+                .buttonStyle(PCButtonStyle())
+                .disabled(!profileEnabled)
+            }
+            .padding(.leading, PCTokens.Spacing.space7)
+        }
+    }
+
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: PCTokens.Spacing.space5) {
             // Changelog
@@ -490,6 +589,41 @@ struct PreferencesView: View {
     private func checkAccessibility() {
         let prompt = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
         privacyStatus = AXIsProcessTrustedWithOptions(prompt) ? "已授权，可一键粘贴" : "请在系统设置中允许辅助功能权限"
+    }
+
+    private var store: ClipboardStore? { (NSApp.delegate as? AppDelegate)?.store }
+
+    private func exportHistory() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "justpaste-history.json"
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try store?.exportHistory(to: url)
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "导出失败"
+            alert.informativeText = error.localizedDescription
+            alert.runModal()
+        }
+    }
+
+    private func importHistory() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let count = try store?.importHistory(from: url) ?? 0
+            let alert = NSAlert()
+            alert.messageText = "导入完成"
+            alert.informativeText = "新增 \(count) 条记录"
+            alert.runModal()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "导入失败"
+            alert.informativeText = error.localizedDescription
+            alert.runModal()
+        }
     }
 }
 

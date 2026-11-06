@@ -19,3 +19,7 @@ xcuserdata/
 
 # Local HTTPS development certificate and private key
 website/.certs/
+
+# Release artifacts and maintenance output
+dist/
+MAINTENANCE_REPORTS/
