@@ -11,17 +11,42 @@ struct PasteCloneApp: App {
     var body: some Scene {
         Settings { PreferencesView() }
         MenuBarExtra {
-            Button("打开剪贴板 (⇧⌘V)") { appDelegate.togglePanel() }
-            Button("偏好设置") { NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil) }
-            Button(ClipboardMonitor.isPaused ? "恢复记录" : "暂停记录") { ClipboardMonitor.isPaused.toggle() }
-            Button("忽略下一次复制") { ClipboardMonitor.ignoreNext = true }
-            Divider()
-            Button("退出 Just Paste") { NSApp.terminate(nil) }
+            MenuBarContentView(store: appDelegate.store, appDelegate: appDelegate)
         } label: {
             Image("MenuBarIcon")
                 .renderingMode(.template)
         }
         .menuBarExtraStyle(.menu)
+    }
+}
+
+private struct MenuBarContentView: View {
+    @ObservedObject var store: ClipboardStore
+    let appDelegate: AppDelegate
+
+    var body: some View {
+        Button("打开剪贴板 (⇧⌘V)") { appDelegate.togglePanel() }
+        Divider()
+        // 快速菜单：最近 5 条直接粘贴。菜单栏点击不夺取前台焦点，⌘V 落点仍是原 App。
+        if store.items.isEmpty {
+            Text("暂无历史")
+        } else {
+            ForEach(store.items.prefix(5)) { item in
+                Button(menuTitle(for: item)) { store.paste(item) }
+            }
+        }
+        Divider()
+        Button("偏好设置") { NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil) }
+        Button(ClipboardMonitor.isPaused ? "恢复记录" : "暂停记录") { ClipboardMonitor.isPaused.toggle() }
+        Button("忽略下一次复制") { ClipboardMonitor.ignoreNext = true }
+        Divider()
+        Button("退出 Just Paste") { NSApp.terminate(nil) }
+    }
+
+    private func menuTitle(for item: ClipboardItem) -> String {
+        let oneLine = item.displayText.replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespaces)
+        return String(oneLine.prefix(40))
     }
 }
 

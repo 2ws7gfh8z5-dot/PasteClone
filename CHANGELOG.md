@@ -1,3 +1,13 @@
+## [1.14.0] - 2026-11-07
+
+### 菜单栏快速菜单 + Windows/Linux Fluent 改版
+
+- **菜单栏快速粘贴**：菜单栏菜单直接列出最近 5 条历史，点击即粘贴到当前 App，无需呼出面板
+- **Windows/Linux 客户端 Fluent 2 视觉改版**：浅色/深色双套令牌（accent 蓝 #0F6CBD/#479EF5、中性灰阶、4px 间距网格、4/8px 圆角、字级阶梯），选中行改为 accent 浅色底+描边，搜索框占位提示，粘贴按钮升级为主按钮样式
+- Windows/Linux 字体回退链修复：优先 Segoe UI，Linux 回退 Noto/DejaVu/Ubuntu，CJK 字体兜底（不再显示方块）
+- Windows/Linux 跟随系统深浅色自动切换；清理重复的热键显示判断代码
+- Windows/Linux 客户端版本对齐 1.14.0
+
 ## [1.13.0] - 2026-11-07
 
 ### AI 集成与数据可靠性

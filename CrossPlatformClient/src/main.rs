@@ -1,7 +1,8 @@
 mod history;
+mod theme;
 
 use arboard::Clipboard;
-use eframe::egui::{self, Color32, CornerRadius, Key as EguiKey, RichText, Vec2};
+use eframe::egui::{self, Color32, CornerRadius, Key as EguiKey, Margin, RichText, Stroke};
 use enigo::{
     Direction::{Click, Press, Release},
     Enigo, Key, Keyboard, Settings,
@@ -23,6 +24,13 @@ use std::{
 };
 
 const LIMIT: usize = 500;
+
+const UI_FONT_PATHS: [&str; 4] = [
+    r"C:\Windows\Fonts\segoeui.ttf",
+    "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf",
+];
 
 const CJK_FONT_PATHS: [&str; 7] = [
     "/System/Library/Fonts/PingFang.ttc",
@@ -71,12 +79,17 @@ struct App {
     show: Arc<AtomicBool>,
     paste_status: Arc<Mutex<Option<String>>>,
     persist: bool,
+    theme_dark: Option<bool>,
 }
 
 impl App {
     fn new(cc: &eframe::CreationContext<'_>, hotkey_registered: bool) -> Self {
-        configure_style(&cc.egui_ctx);
-        install_cjk_font(&cc.egui_ctx);
+        let dark = cc
+            .egui_ctx
+            .system_theme()
+            .is_none_or(|t| t == egui::Theme::Dark);
+        theme::apply(&cc.egui_ctx, dark);
+        install_fonts(&cc.egui_ctx);
         let (items, persist, mut status) = match load() {
             Ok(items) => (items, true, String::new()),
             Err(error) => (Vec::new(), false, format!("历史记录读取失败：{error}")),
@@ -114,6 +127,7 @@ impl App {
             show,
             paste_status: Arc::new(Mutex::new(None)),
             persist,
+            theme_dark: Some(dark),
         }
     }
     fn visible_indices(&mut self) -> Vec<usize> {
@@ -218,6 +232,13 @@ impl App {
 
 impl eframe::App for App {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // follow_system_theme replaces Visuals on OS theme switches; re-apply Fluent tokens then.
+        let dark = ctx.style().visuals.dark_mode;
+        if self.theme_dark != Some(dark) {
+            theme::apply(ctx, dark);
+            self.theme_dark = Some(dark);
+        }
+        let tokens = theme::tokens(dark);
         ctx.request_repaint_after(Duration::from_millis(350));
         self.poll_clipboard();
         if self.show.swap(false, Ordering::SeqCst) {
@@ -227,11 +248,6 @@ impl eframe::App for App {
         }
         if let Some(message) = self.paste_status.lock().ok().and_then(|mut s| s.take()) {
             self.status = message;
-        }
-        if self.show.swap(false, Ordering::SeqCst) {
-            self.visible = true;
-            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
-            ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
         }
 
         if !self.visible {
@@ -267,17 +283,23 @@ impl eframe::App for App {
         }
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("剪贴板历史");
-            ui.separator();
+            ui.label(RichText::new("剪贴板历史").size(theme::TEXT_TITLE).strong());
+            ui.add_space(theme::SPACE_M);
 
             // Search box
             ui.horizontal(|ui| {
-                ui.text_edit_singleline(&mut self.query);
+                ui.add(
+                    egui::TextEdit::singleline(&mut self.query)
+                        .hint_text(
+                            RichText::new("搜索剪贴板历史").color(tokens.text_secondary),
+                        )
+                        .desired_width(f32::INFINITY),
+                );
                 if ui.button("清空搜索").clicked() {
                     self.query.clear();
                 }
             });
-            ui.separator();
+            ui.add_space(theme::SPACE_S);
 
             // List items
             let visible = self.visible_indices();
@@ -285,9 +307,9 @@ impl eframe::App for App {
                 ui.centered_and_justified(|ui| {
                     ui.label(
                         if self.query.is_empty() {
-                            RichText::new("暂无历史记录\n请先复制一些内容").color(Color32::from_rgb(150, 140, 130))
+                            RichText::new("暂无历史记录\n请先复制一些内容").color(tokens.text_secondary)
                         } else {
-                            RichText::new("没有找到匹配的记录").color(Color32::from_rgb(150, 140, 130))
+                            RichText::new("没有找到匹配的记录").color(tokens.text_secondary)
                         }
                     );
                 });
@@ -300,11 +322,17 @@ impl eframe::App for App {
                             let is_selected = vis_idx == self.selected;
                             egui::Frame::new()
                                 .fill(if is_selected {
-                                    Color32::from_rgb(238, 194, 151)
+                                    tokens.row_selected
                                 } else {
                                     Color32::TRANSPARENT
                                 })
-                                .corner_radius(CornerRadius::same(6))
+                                .stroke(if is_selected {
+                                    Stroke::new(1.0_f32, tokens.accent)
+                                } else {
+                                    Stroke::NONE
+                                })
+                                .corner_radius(CornerRadius::same(theme::RADIUS_CONTROL))
+                                .inner_margin(Margin::symmetric(8, 4))
                                 .show(ui, |ui| {
                                     ui.horizontal(|ui| {
                                         // Pinned icon
@@ -316,10 +344,24 @@ impl eframe::App for App {
                                         }
 
                                         // Text content (truncated)
-                                        ui.label(RichText::new(preview(&self.items[orig_idx].text)).small());
+                                        ui.label(
+                                            RichText::new(preview(&self.items[orig_idx].text))
+                                                .size(theme::TEXT_CAPTION),
+                                        );
 
-                                        // Paste button
-                                        if ui.small_button("粘贴").clicked() {
+                                        // Paste button (Fluent accent primary action)
+                                        if ui
+                                            .add(
+                                                egui::Button::new(
+                                                    RichText::new("粘贴")
+                                                        .size(theme::TEXT_CAPTION)
+                                                        .color(tokens.on_accent),
+                                                )
+                                                .fill(tokens.accent)
+                                                .corner_radius(CornerRadius::same(theme::RADIUS_CONTROL)),
+                                            )
+                                            .clicked()
+                                        {
                                             self.paste(orig_idx, ctx);
                                         }
 
@@ -342,15 +384,15 @@ impl eframe::App for App {
                 }
             }
 
-            ui.separator();
+            ui.add_space(theme::SPACE_S);
             ui.horizontal(|ui| {
                 ui.label(
                     RichText::new(format!(
                         "{} 条记录 · ↑↓选择 Enter粘贴 · Esc隐藏 · Ctrl+Shift+V呼出",
                         self.items.len()
                     ))
-                    .small()
-                    .color(Color32::from_rgb(105, 92, 79)),
+                    .size(theme::TEXT_CAPTION)
+                    .color(tokens.text_secondary),
                 );
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                     if ui.button("清除未固定").clicked() {
@@ -363,8 +405,8 @@ impl eframe::App for App {
                     }
                     ui.label(
                         RichText::new(&self.status)
-                            .small()
-                            .color(Color32::from_rgb(204, 105, 51)),
+                            .size(theme::TEXT_CAPTION)
+                            .color(tokens.text_secondary),
                     );
                 });
             });
@@ -381,29 +423,33 @@ fn preview(text: &str) -> String {
     }
 }
 
-fn install_cjk_font(ctx: &egui::Context) {
-    let Some(data) = CJK_FONT_PATHS.iter().find_map(|path| fs::read(path).ok()) else {
-        return;
-    };
+fn install_fonts(ctx: &egui::Context) {
     let mut fonts = egui::FontDefinitions::default();
-    fonts
-        .font_data
-        .insert("cjk".to_owned(), Arc::new(egui::FontData::from_owned(data)));
-    for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
-        fonts.families.entry(family).or_default().push("cjk".to_owned());
+    let mut changed = false;
+    // Fluent typeface (Segoe UI) or the closest Linux sans, ahead of egui's bundled fonts.
+    if let Some(data) = UI_FONT_PATHS.iter().find_map(|path| fs::read(path).ok()) {
+        fonts
+            .font_data
+            .insert("fluent-ui".to_owned(), Arc::new(egui::FontData::from_owned(data)));
+        fonts
+            .families
+            .entry(egui::FontFamily::Proportional)
+            .or_default()
+            .insert(0, "fluent-ui".to_owned());
+        changed = true;
     }
-    ctx.set_fonts(fonts);
-}
-
-fn configure_style(ctx: &egui::Context) {
-    let mut style = (*ctx.style()).clone();
-    style.spacing.item_spacing = Vec2::new(8.0, 8.0);
-    style.visuals.widgets.inactive.corner_radius = CornerRadius::same(8);
-    style.visuals.widgets.hovered.corner_radius = CornerRadius::same(8);
-    style.visuals.widgets.hovered.bg_fill = Color32::from_rgb(238, 194, 151);
-    style.visuals.selection.bg_fill = Color32::from_rgb(204, 105, 51);
-    style.scroll_animation = egui::style::ScrollAnimation::none();
-    ctx.set_style(style);
+    if let Some(data) = CJK_FONT_PATHS.iter().find_map(|path| fs::read(path).ok()) {
+        fonts
+            .font_data
+            .insert("cjk".to_owned(), Arc::new(egui::FontData::from_owned(data)));
+        for family in [egui::FontFamily::Proportional, egui::FontFamily::Monospace] {
+            fonts.families.entry(family).or_default().push("cjk".to_owned());
+        }
+        changed = true;
+    }
+    if changed {
+        ctx.set_fonts(fonts);
+    }
 }
 
 fn data_path() -> PathBuf {
