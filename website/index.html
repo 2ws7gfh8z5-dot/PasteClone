@@ -3,177 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Just Paste — 你的剪贴板，有记忆</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>Just Paste — 复制过的，都记得</title>
 <style>
   :root {
-    --paper: #F6F1E7;
-    --kraft: #EDE4D3;
-    --ink: #2B2620;
-    --ink-soft: #6B6154;
-    --clip: #E8853D;
-    --clip-deep: #C96A24;
-    --hairline: rgba(43, 38, 32, .14);
+    --white: #fbfbfd;
+    --gray: #f5f5f7;
+    --ink: #1d1d1f;
+    --ink-soft: #6e6e73;
+    --blue: #0071e3;
+    --blue-hover: #0077ed;
+    --clip: #e8853d;
+    --hairline: #d2d2d7;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    background: var(--paper);
+    background: var(--white);
     color: var(--ink);
-    font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased;
     overflow-x: hidden;
   }
-  ::selection { background: var(--clip); color: #fff; }
+  ::selection { background: var(--blue); color: #fff; }
 
-  /* ---------- hero ---------- */
   #scene {
     position: fixed; inset: 0; z-index: 0;
     width: 100%; height: 100%;
     pointer-events: none;
   }
-  .hero {
+
+  section {
     position: relative; z-index: 1;
     min-height: 100vh;
     display: flex; flex-direction: column; justify-content: center;
-    padding: 0 8vw;
-    pointer-events: none;
+    padding: 120px 6vw;
   }
-  .hero > * { pointer-events: auto; }
+  .center { align-items: center; text-align: center; }
+  .hero-top { justify-content: flex-start; padding-top: 11vh; }
+
   .eyebrow {
-    font-family: "Space Grotesk", monospace;
-    font-size: 13px; letter-spacing: .22em; text-transform: uppercase;
-    color: var(--clip-deep);
-    display: flex; align-items: center; gap: 12px;
+    font-size: clamp(17px, 1.8vw, 21px); font-weight: 600;
+    color: var(--clip); margin-bottom: 12px;
   }
-  .eyebrow::before { content: ""; width: 32px; height: 1px; background: var(--clip-deep); }
-  h1 {
-    font-size: clamp(44px, 7.5vw, 104px);
-    line-height: 1.04; font-weight: 700;
-    letter-spacing: -.02em;
-    margin: 22px 0 26px;
-    max-width: 12ch;
+  .black .eyebrow { color: #f5a668; }
+  h1, h2 {
+    font-weight: 700; letter-spacing: -.022em; line-height: 1.06;
   }
-  h1 .dot { color: var(--clip); }
-  .hero p {
-    font-size: clamp(16px, 1.6vw, 19px);
-    color: var(--ink-soft); line-height: 1.75;
-    max-width: 34em;
+  h1 { font-size: clamp(56px, 9vw, 128px); }
+  h2 { font-size: clamp(40px, 5.6vw, 80px); max-width: 16ch; }
+  .sub {
+    font-size: clamp(19px, 2.1vw, 26px); font-weight: 400;
+    color: var(--ink-soft); line-height: 1.5;
+    margin-top: 20px; max-width: 30em;
   }
-  .hero-keys { display: flex; gap: 10px; margin-top: 36px; align-items: center; flex-wrap: wrap; }
-  kbd {
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 14px;
-    background: #fff;
-    border: 1px solid var(--hairline);
-    border-bottom-width: 3px;
-    border-radius: 8px;
-    padding: 8px 14px;
-  }
-  .hero-keys span { font-size: 14px; color: var(--ink-soft); }
-  .cta-row { margin-top: 44px; display: flex; gap: 16px; flex-wrap: wrap; }
-  .btn {
-    font-family: "Space Grotesk", sans-serif;
-    font-size: 15px; font-weight: 500;
-    text-decoration: none;
-    padding: 14px 28px; border-radius: 999px;
-    transition: transform .18s ease, box-shadow .18s ease;
-  }
-  .btn-primary { background: var(--ink); color: var(--paper); box-shadow: 0 8px 24px rgba(43,38,32,.18); }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(43,38,32,.24); }
-  .btn-ghost { color: var(--ink); border: 1px solid var(--hairline); }
-  .btn-ghost:hover { background: #fff; }
-  :is(a, button):focus-visible { outline: 2px solid var(--clip); outline-offset: 3px; }
+  .center .sub { margin-left: auto; margin-right: auto; }
 
-  .scroll-hint {
-    position: absolute; bottom: 32px; left: 8vw;
-    font-family: "IBM Plex Mono", monospace; font-size: 12px;
-    color: var(--ink-soft); letter-spacing: .1em;
-    display: flex; align-items: center; gap: 10px;
+  .cta-row { display: flex; gap: 28px; margin-top: 32px; align-items: center; flex-wrap: wrap; }
+  .center .cta-row { justify-content: center; }
+  .pill {
+    background: var(--blue); color: #fff; text-decoration: none;
+    font-size: 17px; padding: 12px 26px; border-radius: 999px;
+    transition: background .2s ease, transform .2s ease;
   }
-  .scroll-hint::after { content: "↓"; animation: bob 1.6s ease-in-out infinite; }
-  @keyframes bob { 50% { transform: translateY(4px); } }
+  .pill:hover { background: var(--blue-hover); transform: scale(1.03); }
+  .more {
+    color: var(--blue); text-decoration: none; font-size: 17px;
+  }
+  .more:hover { text-decoration: underline; }
+  .more::after { content: " ›"; }
+  :is(a, button):focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
 
-  /* ---------- sections ---------- */
-  main { position: relative; z-index: 1; background: var(--paper); }
-  section { padding: 96px 8vw; border-top: 1px solid var(--hairline); }
-  .sec-label {
-    font-family: "IBM Plex Mono", monospace;
-    font-size: 12px; letter-spacing: .2em;
-    color: var(--clip-deep); margin-bottom: 18px;
-  }
-  h2 {
-    font-size: clamp(28px, 3.6vw, 48px);
-    letter-spacing: -.015em; line-height: 1.15;
-    margin-bottom: 16px; max-width: 20ch;
-  }
-  .sec-sub { color: var(--ink-soft); line-height: 1.75; max-width: 40em; margin-bottom: 56px; }
-
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-  .cell {
-    background: var(--paper); padding: 32px 28px;
-    box-shadow: inset 0 0 0 1px var(--hairline);
-    transition: background .2s ease;
-  }
-  .cell:hover { background: #fff; }
-  .cell .glyph {
-    width: 44px; height: 44px; border-radius: 12px;
-    background: var(--kraft); color: var(--clip-deep);
-    display: grid; place-items: center;
-    font-size: 20px; margin-bottom: 20px;
-  }
-  .cell h3 { font-size: 18px; margin-bottom: 10px; letter-spacing: -.01em; }
-  .cell p { font-size: 14.5px; color: var(--ink-soft); line-height: 1.7; }
-  .cell .tag {
-    display: inline-block; margin-top: 14px;
-    font-family: "IBM Plex Mono", monospace; font-size: 11px;
-    color: var(--ink-soft); border: 1px solid var(--hairline);
-    border-radius: 999px; padding: 3px 10px;
+  /* sections that pair text with the persistent 3D board */
+  .split { max-width: 560px; }
+  .split.right { margin-left: auto; }
+  .feat-title { font-size: clamp(28px, 3.4vw, 48px); font-weight: 700; letter-spacing: -.02em; line-height: 1.12; }
+  .feat-body { font-size: clamp(16px, 1.6vw, 19px); color: var(--ink-soft); line-height: 1.65; margin-top: 16px; }
+  .feat-key {
+    display: inline-block; margin-top: 22px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 14px;
+    color: var(--ink); background: rgba(0,0,0,.05);
+    border: 1px solid var(--hairline); border-bottom-width: 2px;
+    border-radius: 8px; padding: 6px 12px;
   }
 
-  /* shortcuts table */
-  .keys-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 40px; }
+  .bg-gray { background: var(--gray); }
+  .bg-white { background: var(--white); }
+  .black { background: #000; color: #f5f5f7; }
+  .black .sub, .black .feat-body { color: #a1a1a6; }
+  .black .feat-key { background: rgba(255,255,255,.08); border-color: #424245; color: #f5f5f7; }
+
+  /* chapters fade in over the fixed canvas; solid sections above it */
+  .chapter { background: transparent; }
+
+  .stat-row {
+    display: flex; gap: clamp(40px, 8vw, 120px); flex-wrap: wrap; justify-content: center;
+    margin-top: 64px;
+  }
+  .stat { text-align: center; }
+  .stat .num { font-size: clamp(40px, 5vw, 64px); font-weight: 700; letter-spacing: -.02em; }
+  .stat .lbl { font-size: 15px; color: var(--ink-soft); margin-top: 6px; }
+
+  .keys-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px 48px; max-width: 980px; margin: 56px auto 0;
+  }
   .key-item {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 0; border-bottom: 1px dashed var(--hairline);
-    font-size: 15px;
+    padding: 16px 0; border-bottom: 1px solid var(--hairline);
+    font-size: 17px;
   }
-  .key-item kbd { font-size: 13px; padding: 5px 11px; border-radius: 6px; }
-
-  /* privacy strip */
-  .privacy { display: flex; gap: 48px; flex-wrap: wrap; }
-  .privacy div { flex: 1; min-width: 240px; }
-  .privacy h3 { font-size: 17px; margin-bottom: 8px; }
-  .privacy h3::before { content: "✓ "; color: var(--clip-deep); }
-  .privacy p { font-size: 14.5px; color: var(--ink-soft); line-height: 1.7; }
-
-  /* download */
-  .download { text-align: center; padding: 128px 8vw; }
-  .download h2 { margin: 0 auto 20px; }
-  .download p { color: var(--ink-soft); margin-bottom: 40px; }
-  .plat {
-    margin-top: 36px;
-    font-family: "IBM Plex Mono", monospace; font-size: 12.5px;
-    color: var(--ink-soft); letter-spacing: .04em;
+  .key-item kbd {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 14px;
+    background: #fff; border: 1px solid var(--hairline); border-bottom-width: 2px;
+    border-radius: 8px; padding: 6px 12px;
   }
 
   footer {
     position: relative; z-index: 1;
-    background: var(--paper);
-    padding: 40px 8vw; border-top: 1px solid var(--hairline);
-    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    background: var(--gray);
+    padding: 28px 6vw;
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
     font-size: 13px; color: var(--ink-soft);
+    border-top: 1px solid var(--hairline);
   }
-  footer a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--hairline); }
+  footer a { color: var(--ink-soft); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
 
   @media (max-width: 720px) {
-    section { padding: 64px 6vw; }
-    .hero { padding: 0 6vw; }
-    .scroll-hint { left: 6vw; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; }
-    .scroll-hint::after { animation: none; }
+    section { padding: 88px 6vw; }
+    .split, .split.right { margin: 0; max-width: none; }
   }
 </style>
 </head>
@@ -181,76 +139,113 @@
 
 <canvas id="scene"></canvas>
 
-<header class="hero">
-  <div class="eyebrow">Just Paste · macOS 剪贴板</div>
-  <h1>你复制过的<br>都还在<span class="dot">。</span></h1>
-  <p>Just Paste 安静地记下你复制的每一段文字、每一张截图、每一个文件。按下快捷键，它们排着队等你再用一次——搜索、预览、归类、交给 AI，都在这一张剪贴板上。</p>
-  <div class="hero-keys">
-    <kbd>⇧ ⌘ V</kbd><span>呼出历史</span>
-    <kbd>Space</kbd><span>快速预览</span>
-    <kbd>1–9</kbd><span>直接粘贴</span>
-  </div>
+<!-- 1. Hero -->
+<section class="chapter center hero-top" data-bx="2.6" data-by="-2.6" data-bry="-0.35" data-bs="0.9">
+  <div class="eyebrow">Just Paste</div>
+  <h1>复制过的，<br>都记得。</h1>
+  <p class="sub">你剪贴板里进进出出的每一段文字、每张截图、每个文件，Just Paste 都替你收好。⇧⌘V 一按，全部回来。</p>
   <div class="cta-row">
-    <a class="btn btn-primary" href="https://github.com/2ws7gfh8z5-dot/PasteClone/releases">下载 macOS 版</a>
-    <a class="btn btn-ghost" href="#features">看看它能做什么</a>
+    <a class="pill" href="https://github.com/2ws7gfh8z5-dot/PasteClone/releases">下载 macOS 版</a>
+    <a class="more" href="#story">了解它能做什么</a>
   </div>
-  <div class="scroll-hint">SCROLL</div>
-</header>
+</section>
 
-<main>
-  <section id="features">
-    <div class="sec-label">FEATURES</div>
-    <h2>一张会干活的剪贴板</h2>
-    <p class="sec-sub">不只是「上次复制了什么」。看板归类、截图识字、预测下一条——复制的那一刻起，内容就开始为你工作。</p>
-    <div class="grid">
-      <div class="cell"><div class="glyph">▦</div><h3>看板归类</h3><p>把工作、灵感、常用回复分成不同看板，顶部 chip 一键切换，右键即可重命名。常用内容固定在最前。</p><span class="tag">Pinboards</span></div>
-      <div class="cell"><div class="glyph">◎</div><h3>截图也能搜</h3><p>图片里的文字由本地 Vision 识别（中英文），截图里的报错、地址、电话号码，直接搜得到。</p><span class="tag">OCR</span></div>
-      <div class="cell"><div class="glyph">✦</div><h3>预测下一条</h3><p>根据置顶、来源 App 和新近度，面板顶部会猜你接下来要粘贴什么，点一下就贴出去。</p><span class="tag">Intelligent</span></div>
-      <div class="cell"><div class="glyph">␣</div><h3>预览与编辑</h3><p>空格呼出大预览——全文、大图、文件清单、颜色色值。⌘E 就地修正文本再粘贴。</p><span class="tag">Quick Look</span></div>
-      <div class="cell"><div class="glyph">☰</div><h3>粘贴队列</h3><p>把多条内容排进队列，回到目标 App 依次 ⌘V，填表、搬家式录入不再来回切换。</p><span class="tag">Queue</span></div>
-      <div class="cell"><div class="glyph">⌁</div><h3>交给 AI</h3><p>内置本地只读 MCP 服务，Claude 等客户端可直接搜索你的剪贴板历史——只监听本机，令牌鉴权。</p><span class="tag">MCP</span></div>
-    </div>
-  </section>
+<!-- 2. Statement -->
+<section class="chapter center" id="features" data-bx="0" data-by="0.2" data-bry="0.5" data-bs="0.82">
+  <h2>一张会思考的<br>剪贴板。</h2>
+  <p class="sub">不止「上次复制了什么」。归类的、识字的、会预测的——复制的那一刻起，它就在替你干活。</p>
+</section>
 
-  <section>
-    <div class="sec-label">SHORTCUTS</div>
-    <h2>手不离键盘</h2>
-    <p class="sec-sub">每个动作都有按键。用熟之后，粘贴板比鼠标先到。</p>
-    <div class="keys-list">
-      <div class="key-item">呼出 / 收回面板<kbd>⇧ ⌘ V</kbd></div>
-      <div class="key-item">搜索历史<kbd>⌘ F</kbd></div>
-      <div class="key-item">快速预览<kbd>Space</kbd></div>
-      <div class="key-item">编辑文本<kbd>⌘ E</kbd></div>
-      <div class="key-item">固定 / 取消固定<kbd>⌘ P</kbd></div>
-      <div class="key-item">粘贴第 1–9 条<kbd>1 – 9</kbd></div>
-      <div class="key-item">删除条目<kbd>⌘ ⌫</kbd></div>
-      <div class="key-item">关闭<kbd>Esc</kbd></div>
-    </div>
-  </section>
+<!-- 3-7. Feature chapters over the board -->
+<section class="chapter" data-bx="2.4" data-bry="-0.5" data-bs="0.9">
+  <div class="split">
+    <div class="eyebrow">看板</div>
+    <div class="feat-title">分类这件事，<br>明明白白。</div>
+    <p class="feat-body">工作、灵感、常用回复，分进不同看板，顶部轻轻一点就切换。常用的固定在最前，永远抬手可得。</p>
+  </div>
+</section>
 
-  <section>
-    <div class="sec-label">PRIVACY</div>
-    <h2>历史留在你电脑上</h2>
-    <p class="sec-sub">剪贴板是最私密的数据之一。Just Paste 默认什么都不外传。</p>
-    <div class="privacy">
-      <div><h3>敏感内容不入库</h3><p>自动识别 1Password 等密码管理器的剪贴板标记，复制密码这件事，它当作没看见。</p></div>
-      <div><h3>随时暂停</h3><p>菜单栏一键暂停记录，或只忽略下一次复制——复制银行卡号前点一下就好。</p></div>
-      <div><h3>本地存储，可导出</h3><p>全部历史只是磁盘上的一个 JSON。损坏自动备份，可整体导出导入，容量上限由你定。</p></div>
-    </div>
-  </section>
+<section class="chapter" data-bx="-2.4" data-bry="0.6" data-bs="0.9">
+  <div class="split right">
+    <div class="eyebrow">OCR 搜索</div>
+    <div class="feat-title">截图里的字，<br>也能搜。</div>
+    <p class="feat-body">本地 Vision 识别中英文。截图里的报错、地址、电话号码，不用誊抄，直接搜到，直接贴走。</p>
+    <span class="feat-key">⌘F 搜索</span>
+  </div>
+</section>
 
-  <section class="download">
-    <div class="sec-label" style="text-align:center">DOWNLOAD</div>
-    <h2>让复制有记性</h2>
-    <p>免费 · 开源 · macOS 14+</p>
-    <a class="btn btn-primary" href="https://github.com/2ws7gfh8z5-dot/PasteClone/releases">从 GitHub 下载</a>
-    <div class="plat">macOS Universal（正式） · Windows / Linux（预览）</div>
-  </section>
-</main>
+<section class="chapter" data-bx="2.4" data-bry="-0.7" data-bs="0.9">
+  <div class="split">
+    <div class="eyebrow">智能建议</div>
+    <div class="feat-title">你要贴什么，<br>它先猜到。</div>
+    <p class="feat-body">按置顶、来源 App 和新近度，面板顶部会递上下一条最可能要用的内容。点一下，贴出去了。</p>
+  </div>
+</section>
+
+<section class="chapter" data-bx="-2.4" data-bry="0.4" data-bs="0.9">
+  <div class="split right">
+    <div class="eyebrow">预览与队列</div>
+    <div class="feat-title">先看清楚，<br>再挨个贴。</div>
+    <p class="feat-body">空格大预览，全文、大图、文件清单、颜色色值一目了然。多条内容排进队列，回到目标 App 依次粘贴，填表不再来回切。</p>
+    <span class="feat-key">Space 预览 · ⌘E 编辑</span>
+  </div>
+</section>
+
+<section class="chapter" data-bx="2.4" data-bry="-0.55" data-bs="0.9">
+  <div class="split">
+    <div class="eyebrow">MCP</div>
+    <div class="feat-title">AI 也读得懂<br>你的剪贴板。</div>
+    <p class="feat-body">内置本地只读 MCP 服务。Claude 等客户端可以直接搜索你的剪贴板历史——只监听本机，令牌鉴权，一个字都不外传。</p>
+  </div>
+</section>
+
+<!-- 8. Stats -->
+<section class="bg-gray center" data-bx="0" data-bry="0.2" data-bs="0">
+  <div class="eyebrow" style="color:var(--blue)">效率</div>
+  <h2 style="margin:0 auto">手不离键盘。</h2>
+  <div class="stat-row">
+    <div class="stat"><div class="num">⇧⌘V</div><div class="lbl">呼出，就这么一下</div></div>
+    <div class="stat"><div class="num">1–9</div><div class="lbl">数字键直接粘贴</div></div>
+    <div class="stat"><div class="num">0</div><div class="lbl">上传到云端的内容</div></div>
+  </div>
+</section>
+
+<!-- 9. Privacy, black -->
+<section class="black center" data-bx="0" data-bry="0" data-bs="0">
+  <div class="eyebrow">隐私</div>
+  <h2 style="margin:0 auto">你的历史。<br>只属于你。</h2>
+  <p class="sub">密码管理器的内容自动跳过；随时可以暂停记录；所有数据只是你磁盘上的一个文件，导出、删除，你说了算。</p>
+</section>
+
+<!-- 10. Shortcuts -->
+<section class="bg-white center" data-bx="0" data-bry="0" data-bs="0">
+  <div class="eyebrow" style="color:var(--blue)">快捷键</div>
+  <h2 style="margin:0 auto">每个动作，都有按键。</h2>
+  <div class="keys-grid">
+    <div class="key-item">呼出 / 收回面板<kbd>⇧ ⌘ V</kbd></div>
+    <div class="key-item">搜索历史<kbd>⌘ F</kbd></div>
+    <div class="key-item">快速预览<kbd>Space</kbd></div>
+    <div class="key-item">编辑文本<kbd>⌘ E</kbd></div>
+    <div class="key-item">固定条目<kbd>⌘ P</kbd></div>
+    <div class="key-item">粘贴第 1–9 条<kbd>1 – 9</kbd></div>
+    <div class="key-item">删除条目<kbd>⌘ ⌫</kbd></div>
+    <div class="key-item">关闭<kbd>Esc</kbd></div>
+  </div>
+</section>
+
+<!-- 11. Download -->
+<section class="bg-gray center" data-bx="0" data-bry="0" data-bs="0">
+  <h2 style="margin:0 auto">让复制，<br>有记性。</h2>
+  <p class="sub">免费，开源。macOS 14 或更高版本。</p>
+  <div class="cta-row">
+    <a class="pill" href="https://github.com/2ws7gfh8z5-dot/PasteClone/releases">从 GitHub 下载</a>
+    <a class="more" href="https://github.com/2ws7gfh8z5-dot/PasteClone">查看源码</a>
+  </div>
+</section>
 
 <footer>
-  <span>Just Paste — 一张有记忆的剪贴板</span>
-  <a href="https://github.com/2ws7gfh8z5-dot/PasteClone">GitHub →</a>
+  <span>Just Paste — 复制过的，都记得。</span>
+  <span>macOS 正式 · Windows / Linux 预览 · <a href="https://github.com/2ws7gfh8z5-dot/PasteClone">GitHub</a></span>
 </footer>
 
 <script type="importmap">
@@ -267,9 +262,9 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-camera.position.set(0, 1.2, 11);
+camera.position.set(0, 1.0, 11);
 
-const PAPER = 0xF6F1E7, INK = 0x2B2620, CLIP = 0xE8853D, KRAFT = 0xC9AE7E;
+const CLIP = 0xE8853D, KRAFT = 0xC9AE7E;
 
 scene.add(new THREE.HemisphereLight(0xfff8ec, 0xc9b98f, 0.85));
 const sun = new THREE.DirectionalLight(0xffffff, 1.25);
@@ -310,11 +305,8 @@ function slab(w, h, r, depth, color, rough = 0.85) {
   return mesh;
 }
 
-// ---- the clipboard ----
 const board = new THREE.Group();
-const body = slab(3.4, 4.6, 0.28, 0.16, KRAFT);
-board.add(body);
-
+board.add(slab(3.4, 4.6, 0.28, 0.16, KRAFT));
 const clipBar = slab(1.5, 0.5, 0.2, 0.3, CLIP, 0.5);
 clipBar.position.set(0, 2.15, 0.16);
 board.add(clipBar);
@@ -327,7 +319,6 @@ clipPin.position.set(0, 2.32, 0.3);
 clipPin.castShadow = true;
 board.add(clipPin);
 
-// paper sheet with ruled lines
 function paperTexture() {
   const c = document.createElement('canvas'); c.width = 512; c.height = 640;
   const g = c.getContext('2d');
@@ -338,7 +329,7 @@ function paperTexture() {
     g.fillRect(56, 90 + i * 56, w, 10);
   }
   g.fillStyle = '#E8853D';
-  g.fillRect(56, 90, 60, 10); // first line leads with the clip color
+  g.fillRect(56, 90, 60, 10);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
@@ -350,12 +341,9 @@ const paper = new THREE.Mesh(
 paper.position.set(0, -0.15, 0.18);
 paper.castShadow = true;
 board.add(paper);
-
-board.rotation.set(-0.06, -0.35, 0.02);
-board.position.set(3.0, 0.5, 0);
+board.position.set(2.6, 0.2, 0);
 scene.add(board);
 
-// ---- orbiting history cards ----
 function cardTexture(draw) {
   const c = document.createElement('canvas'); c.width = 256; c.height = 176;
   const g = c.getContext('2d');
@@ -368,33 +356,19 @@ function cardTexture(draw) {
   return t;
 }
 const cardKinds = [
-  g => { // text snippet
-    g.fillStyle = '#CFC5B4';
-    [0, 1, 2, 3].forEach(i => g.fillRect(28, 36 + i * 32, 200 - i * 34, 9));
-  },
-  g => { // color swatch
-    g.fillStyle = '#E8853D'; g.fillRect(28, 28, 92, 92);
-    g.fillStyle = '#2B2620'; g.font = '500 20px "IBM Plex Mono", monospace';
-    g.fillText('#E8853D', 28, 152);
-  },
-  g => { // image
-    const grad = g.createLinearGradient(28, 28, 228, 130);
-    grad.addColorStop(0, '#EAD9BE'); grad.addColorStop(1, '#B8C4CE');
-    g.fillStyle = grad; g.fillRect(28, 28, 200, 104);
-    g.fillStyle = '#FFFDF8'; g.beginPath();
-    g.moveTo(28, 132); g.lineTo(96, 72); g.lineTo(148, 132); g.fill();
-    g.beginPath(); g.arc(186, 58, 13, 0, 7); g.fill();
-  },
-  g => { // file
-    g.fillStyle = '#EDE4D3'; g.fillRect(74, 40, 108, 84);
-    g.fillStyle = '#2B2620'; g.font = '500 17px "IBM Plex Mono", monospace';
-    g.fillText('notes.zip', 66, 152);
-  },
-  g => { // link
-    g.fillStyle = '#479EF5';
-    g.beginPath(); g.arc(64, 62, 18, 0, 7); g.fill();
-    g.fillStyle = '#CFC5B4'; g.fillRect(28, 100, 200, 9); g.fillRect(28, 124, 140, 9);
-  },
+  g => { [0, 1, 2, 3].forEach(i => { g.fillStyle = '#CFC5B4'; g.fillRect(28, 36 + i * 32, 200 - i * 34, 9); }); },
+  g => { g.fillStyle = '#E8853D'; g.fillRect(28, 28, 92, 92);
+         g.fillStyle = '#2B2620'; g.font = '500 20px Menlo, monospace'; g.fillText('#E8853D', 28, 152); },
+  g => { const grad = g.createLinearGradient(28, 28, 228, 130);
+         grad.addColorStop(0, '#EAD9BE'); grad.addColorStop(1, '#B8C4CE');
+         g.fillStyle = grad; g.fillRect(28, 28, 200, 104);
+         g.fillStyle = '#FFFDF8'; g.beginPath();
+         g.moveTo(28, 132); g.lineTo(96, 72); g.lineTo(148, 132); g.fill();
+         g.beginPath(); g.arc(186, 58, 13, 0, 7); g.fill(); },
+  g => { g.fillStyle = '#EDE4D3'; g.fillRect(74, 40, 108, 84);
+         g.fillStyle = '#2B2620'; g.font = '500 17px Menlo, monospace'; g.fillText('notes.zip', 66, 152); },
+  g => { g.fillStyle = '#479EF5'; g.beginPath(); g.arc(64, 62, 18, 0, 7); g.fill();
+         g.fillStyle = '#CFC5B4'; g.fillRect(28, 100, 200, 9); g.fillRect(28, 124, 140, 9); },
 ];
 
 const cards = [];
@@ -414,7 +388,25 @@ cardKinds.forEach((draw, i) => {
   scene.add(m);
 });
 
-// ---- interaction: mouse parallax + scroll dolly ----
+// ---- scroll choreography: each section states where the board should be ----
+const chapters = [...document.querySelectorAll('[data-bx]')];
+const target = { x: 2.6, y: -2.6, ry: -0.35, s: 0.9 };
+
+function updateTarget() {
+  const mid = scrollY + innerHeight * 0.5;
+  for (const sec of chapters) {
+    const top = sec.offsetTop, bottom = top + sec.offsetHeight;
+    if (mid >= top && mid < bottom) {
+      target.x = parseFloat(sec.dataset.bx);
+      target.y = parseFloat(sec.dataset.by ?? 0.2);
+      target.ry = parseFloat(sec.dataset.bry);
+      target.s = parseFloat(sec.dataset.bs);
+      break;
+    }
+  }
+}
+addEventListener('scroll', updateTarget, { passive: true });
+
 const mouse = { x: 0, y: 0 };
 addEventListener('pointermove', e => {
   mouse.x = (e.clientX / innerWidth - 0.5) * 2;
@@ -426,41 +418,49 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  // small screens: push the board back and center it behind the text
-  board.position.x = w < 720 ? 0 : 3.0;
-  board.position.z = w < 720 ? -3.5 : 0;
+  canvas.style.opacity = w < 720 ? 0.35 : 1; // small screens: keep the board as wallpaper
 }
 addEventListener('resize', resize);
 resize();
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clock = new THREE.Clock();
+const cur = { x: 2.6, y: -2.6, ry: -0.35, s: 0.9 };
 
 function frame() {
   const t = clock.getElapsedTime();
-  const scroll = Math.min(scrollY / innerHeight, 1.4);
+  updateTarget();
+  cur.x += (target.x - cur.x) * 0.06;
+  cur.y += (target.y - cur.y) * 0.06;
+  cur.ry += (target.ry - cur.ry) * 0.06;
+  cur.s += (target.s - cur.s) * 0.06;
 
-  board.rotation.y = -0.35 + mouse.x * 0.12 + Math.sin(t * 0.25) * 0.22;
-  board.rotation.x = -0.06 + mouse.y * 0.06;
-  board.position.y = 0.5 + Math.sin(t * 0.8) * 0.08 - scroll * 0.6;
+  const visible = cur.s > 0.02;
+  board.visible = visible;
+  cards.forEach(c => c.visible = visible);
+  if (visible) {
+    board.scale.setScalar(cur.s);
+    board.position.x = cur.x;
+    board.position.y = cur.y + Math.sin(t * 0.8) * 0.08;
+    board.rotation.y = cur.ry + mouse.x * 0.1 + Math.sin(t * 0.25) * 0.18;
+    board.rotation.x = -0.05 + mouse.y * 0.05;
 
-  for (const c of cards) {
-    const u = c.userData;
-    u.angle += u.speed * 0.016;
-    c.position.set(
-      board.position.x + Math.cos(u.angle) * u.radius * 0.62,
-      Math.sin(t * 0.9 + u.bobPhase) * 0.35 + 0.2 - scroll * 1.2,
-      board.position.z + Math.sin(u.angle) * u.radius * 0.6
-    );
-    c.lookAt(camera.position);
+    for (const c of cards) {
+      const u = c.userData;
+      u.angle += u.speed * 0.016;
+      c.position.set(
+        cur.x + Math.cos(u.angle) * u.radius * 0.62 * cur.s,
+        cur.y + Math.sin(t * 0.9 + u.bobPhase) * 0.35,
+        Math.sin(u.angle) * u.radius * 0.6
+      );
+      c.scale.setScalar(cur.s);
+      c.lookAt(camera.position);
+    }
   }
-
-  camera.position.y = 1.2 - scroll * 0.8;
-  camera.lookAt(board.position.x * 0.55, 0.4, 0);
   renderer.render(scene, camera);
   if (!reduced) requestAnimationFrame(frame);
 }
-frame(); // reduced motion: renders exactly one static frame
+frame();
 </script>
 </body>
 </html>
